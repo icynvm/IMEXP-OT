@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { configErrorPage, findConfigProblems } from "@/lib/config-check";
 
 /** หน้าที่เข้าได้โดยไม่ต้อง login */
 const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/auth"];
@@ -18,6 +19,16 @@ function startsWithAny(pathname: string, paths: string[]) {
  * หมายเหตุ: การตรวจ "บทบาท" (admin/หัวหน้า) ทำในหน้าเว็บและในฐานข้อมูล ไม่ใช่ที่นี่
  */
 export async function updateSession(request: NextRequest) {
+  // ตั้งค่ายังไม่ครบ -> แสดงหน้าบอกว่าขาดอะไร (ไม่งั้นจะเห็นแค่ "Internal Server Error")
+  const problems = findConfigProblems();
+  if (problems.length > 0) {
+    console.error("[config]", problems.join(" | "));
+    return new NextResponse(configErrorPage(problems), {
+      status: 500,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
