@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { notifyOtUsageSubmitted } from "@/lib/email/notify";
 import { toThaiMessage } from "@/lib/errors";
+import { setFlash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/types";
 import { formValues, invalid, otUsageSchema } from "@/lib/validation";
@@ -44,7 +45,8 @@ export async function submitOtUsage(_prev: ActionState, formData: FormData): Pro
   after(() => notifyOtUsageSubmitted(id as string));
 
   revalidatePath("/", "layout");
-  redirect(`/ot-usages?message=${encodeURIComponent("ส่งคำขอใช้ OT เรียบร้อย รอหัวหน้าอนุมัติ")}`);
+  await setFlash("ส่งคำขอใช้ OT เรียบร้อย รอหัวหน้าอนุมัติ");
+  redirect("/ot-usages");
 }
 
 /** ยกเลิกคำขอใช้ OT (ชั่วโมงที่จองไว้จะคืนเข้ายอดคงเหลือ) — ฟอร์มส่งช่อง id มา */
@@ -55,5 +57,6 @@ export async function cancelOtUsage(_prev: ActionState, formData: FormData): Pro
   if (error) return { ok: false, message: toThaiMessage(error) };
 
   revalidatePath("/", "layout");
-  redirect(`/ot-usages?message=${encodeURIComponent("ยกเลิกคำขอแล้ว ชั่วโมงที่จองไว้คืนเข้ายอดคงเหลือ")}`);
+  await setFlash("ยกเลิกคำขอแล้ว ชั่วโมงที่จองไว้คืนเข้ายอดคงเหลือ");
+  redirect("/ot-usages");
 }

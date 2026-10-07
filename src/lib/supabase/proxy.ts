@@ -62,7 +62,8 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = path;
     url.search = "";
-    if (path === "/login" && pathname !== "/") {
+    // จำหน้าที่จะกลับไปหลัง login (ไม่ต่อท้าย URL ถ้าเป็นหน้าหลักอยู่แล้ว ให้ URL สะอาด)
+    if (path === "/login" && pathname !== "/" && pathname !== "/dashboard") {
       url.searchParams.set("next", `${pathname}${search}`);
     }
     const redirect = NextResponse.redirect(url);

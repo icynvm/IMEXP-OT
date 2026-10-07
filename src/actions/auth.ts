@@ -1,8 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { env } from "@/lib/env";
 import { toThaiAuthMessage } from "@/lib/errors";
+import { setFlash } from "@/lib/flash";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -60,9 +62,10 @@ export async function register(_prev: ActionState, formData: FormData): Promise<
   // ถ้าปิดการยืนยันอีเมลใน Supabase จะได้ session ทันที
   if (data.session) redirect("/dashboard");
 
-  redirect(
-    `/login?message=${encodeURIComponent("สมัครสำเร็จ! กรุณากดลิงก์ยืนยันในอีเมลของคุณก่อนเข้าสู่ระบบ")}`,
-  );
+  await setFlash("สมัครสำเร็จ! กรุณากดลิงก์ยืนยันในอีเมลของคุณก่อนเข้าสู่ระบบ");
+  // หน้า สมัคร → login ใช้ layout เดียวกัน ต้องสั่งโหลด layout ใหม่เพื่อให้อ่านข้อความแจ้งผล
+  revalidatePath("/", "layout");
+  redirect("/login");
 }
 
 export async function logout() {
@@ -103,5 +106,6 @@ export async function resetPassword(_prev: ActionState, formData: FormData): Pro
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) return { ok: false, message: toThaiAuthMessage(error) };
 
-  redirect(`/dashboard?message=${encodeURIComponent("เปลี่ยนรหัสผ่านเรียบร้อยแล้ว")}`);
+  await setFlash("เปลี่ยนรหัสผ่านเรียบร้อยแล้ว");
+  redirect("/dashboard");
 }

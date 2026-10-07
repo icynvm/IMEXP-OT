@@ -6,12 +6,13 @@ import {
   Clock3,
   History,
   LayoutDashboard,
+  Loader2,
   LogOut,
   Menu,
   Users,
   type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { logout } from "@/actions/auth";
@@ -55,11 +56,17 @@ function Brand() {
   );
 }
 
+/** ไอคอนเมนู: ระหว่างกำลังเปิดหน้า จะเปลี่ยนเป็นวงหมุนให้รู้ว่ากดแล้ว */
+function NavIcon({ icon: Icon }: { icon: LucideIcon }) {
+  const { pending } = useLinkStatus();
+  return pending ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />;
+}
+
 function Nav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <nav className="grid gap-1">
-      {items.map(({ href, label, icon: Icon, badge }) => {
+      {items.map(({ href, label, icon, badge }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
@@ -73,7 +80,7 @@ function Nav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void 
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <Icon className="size-4" />
+            <NavIcon icon={icon} />
             <span className="flex-1">{label}</span>
             {badge ? (
               <span className="bg-destructive rounded-full px-1.5 py-0.5 text-[11px] leading-none font-medium text-white">

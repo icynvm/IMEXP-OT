@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { toThaiMessage } from "@/lib/errors";
+import { setFlash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/types";
 import { adminUserSchema, formValues, invalid } from "@/lib/validation";
@@ -32,5 +33,6 @@ export async function updateUser(_prev: ActionState, formData: FormData): Promis
   if (error) return { ok: false, message: toThaiMessage(error), values };
 
   revalidatePath("/", "layout");
-  redirect(`/admin/users?message=${encodeURIComponent("บันทึกข้อมูลผู้ใช้เรียบร้อย")}`);
+  await setFlash("บันทึกข้อมูลผู้ใช้เรียบร้อย");
+  redirect("/admin/users");
 }

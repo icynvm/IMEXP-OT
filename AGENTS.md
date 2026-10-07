@@ -29,8 +29,10 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
 ## UI conventions
 - shadcn/ui (new-york, Tailwind v4, CSS variables in `src/app/globals.css`) lives in `src/components/ui/`; add more with
   `npx shadcn@latest add <name>`. Radix primitives come from the `radix-ui` package. Icons: `lucide-react` only.
-- Confirmations use `ConfirmDialog` (Radix AlertDialog). Success feedback: the action `redirect()`s with
-  `?message=...` and `FlashDialog` (in the layouts) shows it.
+- Confirmations use `ConfirmDialog` (Radix AlertDialog). Success/error feedback: the action calls `setFlash()`
+  (short-lived cookie, `src/lib/flash.ts`) then `redirect()`s to a clean URL; `FlashDialog` in the layouts shows it.
+  Keep URLs clean: never put messages in query strings.
+- `src/app/(app)/loading.tsx` gives instant skeleton feedback on navigation; nav items show a spinner via `useLinkStatus`.
 - Forms that contain Radix Select/RadioGroup/Checkbox must use `ActionForm` + controlled state + hidden inputs:
   React resets `<form action>` after submit and Radix's form-reset listeners would revert the user's choices.
 

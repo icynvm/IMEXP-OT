@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { notifyOtRequestSubmitted } from "@/lib/email/notify";
 import { toThaiMessage } from "@/lib/errors";
+import { setFlash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/types";
 import { formValues, invalid, otRequestSchema } from "@/lib/validation";
@@ -33,7 +34,8 @@ export async function submitOtRequest(_prev: ActionState, formData: FormData): P
   after(() => notifyOtRequestSubmitted(id as string));
 
   revalidatePath("/", "layout");
-  redirect(`/ot-requests?message=${encodeURIComponent("ส่งคำขอทำ OT เรียบร้อย รอหัวหน้าอนุมัติ")}`);
+  await setFlash("ส่งคำขอทำ OT เรียบร้อย รอหัวหน้าอนุมัติ");
+  redirect("/ot-requests");
 }
 
 /** ยกเลิกคำขอทำ OT (ได้เฉพาะที่ยังรออนุมัติ) — ฟอร์มส่งช่อง id มา */
@@ -44,5 +46,6 @@ export async function cancelOtRequest(_prev: ActionState, formData: FormData): P
   if (error) return { ok: false, message: toThaiMessage(error) };
 
   revalidatePath("/", "layout");
-  redirect(`/ot-requests?message=${encodeURIComponent("ยกเลิกคำขอทำ OT แล้ว")}`);
+  await setFlash("ยกเลิกคำขอทำ OT แล้ว");
+  redirect("/ot-requests");
 }

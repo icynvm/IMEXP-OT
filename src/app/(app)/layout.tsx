@@ -1,7 +1,7 @@
-import { Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
 import { FlashDialog } from "@/components/flash-dialog";
 import { isApprover, requireUser } from "@/lib/auth";
+import { readFlash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 
 /** จำนวนรายการที่รออนุมัติ (แสดงเป็นตัวเลขสีแดงบนเมนู) */
@@ -22,9 +22,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <AppShell user={user} pendingCount={pendingCount}>
       {children}
-      <Suspense>
-        <FlashDialog />
-      </Suspense>
+      <FlashDialog flash={await readFlash()} />
     </AppShell>
   );
 }

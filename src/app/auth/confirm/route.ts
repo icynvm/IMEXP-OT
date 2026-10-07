@@ -1,5 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { flashCookie } from "@/lib/flash";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,8 +17,12 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const next = safeRedirectPath(searchParams.get("next"));
 
-  const fail = (message: string) =>
-    NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(message)}`, origin));
+  // แจ้ง error ผ่าน cookie (กล่องแจ้งเตือนในหน้า login) แทนการต่อท้าย URL
+  const fail = (message: string) => {
+    const response = NextResponse.redirect(new URL("/login", origin));
+    response.cookies.set(flashCookie(message, "error"));
+    return response;
+  };
 
   if (searchParams.get("error_description")) {
     return fail("ลิงก์ไม่ถูกต้องหรือหมดอายุแล้ว กรุณาลองใหม่อีกครั้ง");

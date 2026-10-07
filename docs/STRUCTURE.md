@@ -107,7 +107,7 @@
 | สีหลักของเว็บ | `--primary` ใน `src/app/globals.css` |
 | หน้าตาปุ่ม / การ์ด / ตาราง | `src/components/ui/` (ใช้ [Tailwind CSS](https://tailwindcss.com/docs) — ชื่อ class เช่น `bg-blue-600` = พื้นสีน้ำเงิน) |
 | เมนู / ไอคอนเมนู | `src/components/app-shell.tsx` (เลือกไอคอนได้ที่ [lucide.dev/icons](https://lucide.dev/icons)) |
-| ข้อความในกล่องยืนยัน / กล่องแจ้งเตือน | `title` / `description` ที่ส่งให้ `ConfirmDialog` ในแต่ละหน้า / ข้อความ `?message=` ใน `src/actions/` |
+| ข้อความในกล่องยืนยัน / กล่องแจ้งเตือน | `title` / `description` ที่ส่งให้ `ConfirmDialog` ในแต่ละหน้า / ข้อความใน `setFlash(...)` ใน `src/actions/` |
 | **เวลาเข้า-เลิกงาน (09:00 / 18:00)** | 3 ที่: `src/lib/constants.ts` + constraint `ot_requests_period_window` ในฐานข้อมูล (ทำ migration ใหม่) + ข้อความใน `src/lib/errors.ts` |
 | กฎการใช้ OT (เช่น เพิ่มวันหมดอายุ) | ฟังก์ชัน `submit_ot_usage` ในฐานข้อมูล (ทำ migration ใหม่) |
 

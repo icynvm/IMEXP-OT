@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { notifyOtRequestReviewed, notifyOtUsageReviewed } from "@/lib/email/notify";
 import { toThaiMessage } from "@/lib/errors";
+import { setFlash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/types";
 import { invalid, reviewSchema } from "@/lib/validation";
@@ -40,5 +41,6 @@ export async function review(
 
   revalidatePath("/", "layout");
   const message = decision === "approve" ? "อนุมัติเรียบร้อย ระบบแจ้งพนักงานทางอีเมลแล้ว" : "บันทึกการไม่อนุมัติเรียบร้อย ระบบแจ้งพนักงานทางอีเมลแล้ว";
-  redirect(`/approvals?message=${encodeURIComponent(message)}`);
+  await setFlash(message);
+  redirect("/approvals");
 }
