@@ -25,7 +25,7 @@ export function LoginForm({ next }: { next: string }) {
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}
-          placeholder="name@company.com หรือ EMP001"
+          placeholder="name@company.com หรือ 01234"
           required
           defaultValue={state.values?.identifier}
         />

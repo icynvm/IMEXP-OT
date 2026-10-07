@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarOff, PartyPopper } from "lucide-react";
+import { CalendarOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ThaiCalendar, type DayMarker } from "@/components/calendar/thai-calendar";
 import { EmptyState } from "@/components/empty-state";
