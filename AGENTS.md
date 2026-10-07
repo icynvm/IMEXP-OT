@@ -18,6 +18,8 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
   `security definer` functions in `supabase/migrations/*.sql` (`submit_ot_request`, `review_ot_usage`, …).
   Clients have SELECT-only grants; RLS scopes reads (own rows / supervisor's team / admin all).
   Never add INSERT/UPDATE/DELETE policies or grants for `authenticated`.
+  Only exception: Storage bucket `avatars` lets a user insert/delete objects in their own `<uid>/` folder;
+  the profile column itself is still set via `set_my_avatar()`.
 - Balances are computed by views (`ot_request_balances`, `employee_ot_summary`); never store a balance column.
 - Server Actions (`src/actions/`) must call `requireUser()` first, validate with zod (`src/lib/validation.ts`),
   then call the RPC. Mirror DB rules in zod only for friendly Thai messages.

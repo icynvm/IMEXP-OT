@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   PartyPopper,
+  UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -19,10 +20,10 @@ import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { logout } from "@/actions/auth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { UserAvatar } from "@/components/user-avatar";
 import { APPROVER_ROLES, ROLE_LABELS } from "@/lib/constants";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ function navItems(user: Profile, pendingCount: number): NavItem[] {
     { href: "/ot-requests", label: "คำขอทำ OT", icon: Clock3 },
     { href: "/ot-usages", label: "ใช้ชั่วโมง OT", icon: CalendarClock },
     { href: "/calendar", label: "ตารางวันหยุด", icon: CalendarDays },
+    { href: "/profile", label: "โปรไฟล์", icon: UserRound },
   ];
   if (isApprover(user)) {
     const overviewLabel =
@@ -106,20 +108,21 @@ function Nav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void 
   );
 }
 
-function UserBox({ user }: { user: Profile }) {
+function UserBox({ user, onNavigate }: { user: Profile; onNavigate?: () => void }) {
   return (
     <div className="flex items-center gap-3">
-      <Avatar className="size-9">
-        <AvatarFallback className="bg-primary/10 text-primary text-sm">{user.first_name.slice(0, 1)}</AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1 leading-tight">
-        <p className="truncate text-sm font-medium">
-          {user.first_name} {user.last_name}
-        </p>
-        <p className="text-muted-foreground truncate text-xs">
-          {user.employee_code} · {ROLE_LABELS[user.role]}
-        </p>
-      </div>
+      {/* กดที่รูป/ชื่อ -> หน้าโปรไฟล์ */}
+      <Link href="/profile" onClick={onNavigate} className="hover:bg-muted/60 -m-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition-colors">
+        <UserAvatar firstName={user.first_name} avatarPath={user.avatar_path} />
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="truncate text-sm font-medium">
+            {user.first_name} {user.last_name}
+          </p>
+          <p className="text-muted-foreground truncate text-xs">
+            {user.employee_code} · {ROLE_LABELS[user.role]}
+          </p>
+        </div>
+      </Link>
       <form action={logout}>
         <Button type="submit" variant="ghost" size="icon-sm" aria-label="ออกจากระบบ" title="ออกจากระบบ">
           <LogOut />
@@ -184,7 +187,7 @@ export function AppShell({
               </div>
               <Separator />
               <div className="p-4">
-                <UserBox user={user} />
+                <UserBox user={user} onNavigate={() => setOpen(false)} />
               </div>
             </SheetContent>
           </Sheet>

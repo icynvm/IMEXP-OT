@@ -18,6 +18,8 @@ export type Profile = {
   supervisor_id: string | null;
   department_id: string | null;
   is_active: boolean;
+  /** path ของรูปโปรไฟล์ใน Storage bucket "avatars" (null = ยังไม่ตั้งรูป) */
+  avatar_path: string | null;
 };
 
 /** แผนก */
@@ -60,7 +62,8 @@ export type OtRequest = {
   review_note: string | null;
   created_at: string;
   employee?: PersonRef | null;
-  reviewer?: PersonRef | null;
+  /** ชื่อผู้อนุมัติ / ไม่อนุมัติ */
+  reviewer_name?: string | null;
 };
 
 /** การตัดชั่วโมงจากคำขอ OT หนึ่งรายการ */
@@ -83,7 +86,8 @@ export type OtUsage = {
   review_note: string | null;
   created_at: string;
   employee?: PersonRef | null;
-  reviewer?: PersonRef | null;
+  /** ชื่อผู้อนุมัติ / ไม่อนุมัติ */
+  reviewer_name?: string | null;
   allocations?: OtUsageAllocation[];
 };
 

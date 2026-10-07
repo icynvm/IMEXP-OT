@@ -63,7 +63,7 @@ export async function GET(request: Request) {
           r.hours,
           r.description,
           STATUS_LABELS[r.status],
-          r.reviewer ? fullName(r.reviewer) : "",
+          r.reviewer_name ?? "",
           r.review_note,
         ]),
       ];
@@ -80,7 +80,7 @@ export async function GET(request: Request) {
           u.allocations?.map((a) => `${a.ot_request?.work_date} (${a.hours} ชม.)`).join("; "),
           u.reason,
           STATUS_LABELS[u.status],
-          u.reviewer ? fullName(u.reviewer) : "",
+          u.reviewer_name ?? "",
           u.review_note,
         ]),
       ];

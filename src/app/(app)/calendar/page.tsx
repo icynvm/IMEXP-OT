@@ -38,7 +38,7 @@ export default async function CalendarPage() {
         ? {
             hours: Number(d.hours),
             reason: d.reason,
-            reviewer: d.reviewer ? `${d.reviewer.first_name} ${d.reviewer.last_name}` : null,
+            reviewer: d.reviewer_name ?? null,
             reviewNote: d.review_note,
             sources: (d.allocations ?? []).map((a) => ({ workDate: a.ot_request?.work_date ?? "", hours: Number(a.hours) })),
           }

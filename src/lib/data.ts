@@ -19,17 +19,18 @@ import type {
  */
 
 // ส่วน select ที่ใช้ซ้ำ  (employee:profiles!... = ดึงชื่อพนักงานมาด้วย)
+// reviewer_name = ชื่อผู้อนุมัติ (ฟังก์ชันในฐานข้อมูล อ่านได้แม้ไม่มีสิทธิ์ดูโปรไฟล์ของผู้อนุมัติ เช่น admin)
 const PERSON = "first_name, last_name, employee_code";
 const OT_REQUEST_FIELDS = `
   id, employee_id, request_date, work_date, period, start_time, end_time, hours,
   description, status, reviewed_at, review_note, created_at,
   employee:profiles!ot_requests_employee_id_fkey(${PERSON}),
-  reviewer:profiles!ot_requests_reviewed_by_fkey(${PERSON})
+  reviewer_name
 `;
 const OT_USAGE_FIELDS = `
   id, employee_id, request_date, use_date, hours, reason, status, reviewed_at, review_note, created_at,
   employee:profiles!ot_usages_employee_id_fkey(${PERSON}),
-  reviewer:profiles!ot_usages_reviewed_by_fkey(${PERSON}),
+  reviewer_name,
   allocations:ot_usage_allocations(
     ot_request_id, hours,
     ot_request:ot_requests(work_date, period, start_time, end_time, description)

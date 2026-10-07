@@ -24,6 +24,8 @@
      (แผนก, หัวหน้าแผนก, อนุมัติอัตโนมัติ, ตารางวันหยุด)
      แล้วต่อด้วย [`20261012000000_public_holidays.sql`](../supabase/migrations/20261012000000_public_holidays.sql)
      (วันหยุดนักขัตฤกษ์ ปี 2569–2570)
+     แล้วต่อด้วย [`20261015000000_profile_avatar_reviewer.sql`](../supabase/migrations/20261015000000_profile_avatar_reviewer.sql)
+     (หน้าโปรไฟล์ + ที่เก็บรูป Storage bucket `avatars` + ชื่อผู้อนุมัติ — ไฟล์นี้สร้าง bucket ให้เอง ไม่ต้องไปสร้างในเมนู Storage)
    - ถ้าเคยรันไฟล์แรกไปแล้ว ให้รันเฉพาะไฟล์ที่ยังไม่เคยรัน
 5. ไปที่ **Project Settings → API Keys** จดค่าเหล่านี้ไว้ใช้ในขั้นที่ 3:
    - **Project URL** (เช่น `https://abcd1234.supabase.co`)
@@ -135,7 +137,11 @@ Supabase → **Authentication → Sign In / Providers → Email**
 - **Confirm email**: เปิด (แนะนำ เพื่อยืนยันว่าเป็นอีเมลจริงของพนักงาน)
 - **Minimum password length**: `8`
 
-### แม่แบบอีเมลภาษาไทย (แนะนำ)
+### แม่แบบอีเมลภาษาไทย (สำคัญ — แก้ปัญหา "สมัครบนคอม แต่กดยืนยันจากมือถือไม่ได้")
+
+อีเมล **ยืนยันสมัคร** และ **ตั้งรหัสผ่านใหม่** ถูกส่งโดย **Supabase** (ผ่าน SMTP ของ Resend ถ้าตั้งไว้)
+จึงต้องแก้แม่แบบที่ **Supabase** ไม่ใช่ที่หน้า Templates ของ Resend
+(แม่แบบใน Resend ใช้ไม่ได้กับอีเมลเหล่านี้ เพราะ Supabase เป็นคนสร้างลิงก์ยืนยัน)
 
 Supabase → **Authentication → Emails → Templates**
 
@@ -144,8 +150,15 @@ Supabase → **Authentication → Emails → Templates**
 | **Confirm signup** | `ยืนยันอีเมล — ระบบขอ OT` | [`supabase/templates/confirmation.html`](../supabase/templates/confirmation.html) |
 | **Reset password** | `ตั้งรหัสผ่านใหม่ — ระบบขอ OT` | [`supabase/templates/recovery.html`](../supabase/templates/recovery.html) |
 
-แม่แบบนี้ใช้ลิงก์แบบ `token_hash` ทำให้ **กดลิงก์จากมือถือได้แม้สมัครจากคอมพิวเตอร์**
-(ถ้าใช้แม่แบบเดิมของ Supabase ระบบก็ยังทำงานได้ แต่ลิงก์ตั้งรหัสผ่านใหม่ต้องเปิดในเบราว์เซอร์เดียวกับที่กดขอ)
+วิธีวาง: เปิดไฟล์ → คัดลอก **ทั้งไฟล์** → วางในช่อง Body (โหมด Source) → แก้ Subject → **Save** (ทำทั้ง 2 แม่แบบ)
+
+- แม่แบบนี้ใช้ลิงก์แบบ `token_hash` ทำให้ **กดลิงก์จากมือถือได้แม้สมัครจากคอมพิวเตอร์**
+  แม่แบบเดิมของ Supabase (`{{ .ConfirmationURL }}`) ต้องเปิดในเบราว์เซอร์เดียวกับที่สมัคร
+  (ระบบรองรับไว้แล้ว: ถ้าเปิดจากเครื่องอื่น จะแจ้งว่ายืนยันแล้ว ให้เข้าสู่ระบบได้เลย แต่ลิงก์ตั้งรหัสผ่านใหม่จะใช้ไม่ได้)
+- ในอีเมลเขียนว่าลิงก์ใช้ได้ **24 ชั่วโมง** → ตั้งให้ตรงที่ Supabase → **Authentication → Sign In / Providers → Email**
+  → **Email OTP Expiration** = `86400` (วินาที)
+- ลิงก์ในอีเมลใช้ **Site URL** (หัวข้อด้านบน) — ต้องเป็นโดเมนจริง เช่น `https://ot.kie-ra.online` ไม่ใช่ `localhost`
+- แก้ข้อความ/โลโก้ในอีเมลได้ที่ไฟล์ทั้งสอง (ห้ามแก้ส่วน `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}…`)
 
 ---
 

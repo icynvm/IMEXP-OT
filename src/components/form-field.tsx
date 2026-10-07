@@ -17,7 +17,8 @@ export function FormField({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-2">
+    // content-start: ช่องที่อยู่แถวเดียวกันเริ่มที่ระดับเดียวกันเสมอ แม้อีกช่องมีคำอธิบาย/error ยาวกว่า
+    <div className="grid content-start gap-2">
       <Label htmlFor={htmlFor}>
         {label}
         {required && <span className="text-destructive">*</span>}

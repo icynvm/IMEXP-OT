@@ -151,6 +151,18 @@ export const adminUserSchema = z.object({
   is_active: z.boolean(),
 });
 
+// ---------------------------------------------------------------------------
+// โปรไฟล์ของตัวเอง
+// ---------------------------------------------------------------------------
+export const profileSchema = z.object({
+  first_name: nameField("ชื่อ"),
+  last_name: nameField("นามสกุล"),
+});
+
+/** รูปโปรไฟล์: หน้าเว็บย่อรูปเป็น 512px ก่อนส่ง จึงเล็กกว่า 1 MB เสมอ (ตรงกับที่ตั้งไว้ใน bucket) */
+export const AVATAR_MAX_BYTES = 1024 * 1024;
+export const AVATAR_TYPES: Record<string, string> = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
+
 export const holidaySchema = z.object({
   holiday_date: dateField("วันที่"),
   name: z.string().trim().min(1, "กรุณากรอกชื่อวันหยุด").max(200, "ชื่อวันหยุดยาวเกินไป"),

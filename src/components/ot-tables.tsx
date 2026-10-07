@@ -24,11 +24,11 @@ function Employee({ person }: { person?: PersonRef | null }) {
   );
 }
 
-function Reviewer({ reviewer, note }: { reviewer?: PersonRef | null; note: string | null }) {
+function Reviewer({ reviewer, note }: { reviewer?: string | null; note: string | null }) {
   if (!reviewer && !note) return <TableCell className="text-muted-foreground">-</TableCell>;
   return (
     <TableCell className="max-w-56 text-xs whitespace-normal">
-      {reviewer && <div className="text-muted-foreground">โดย {fullName(reviewer)}</div>}
+      {reviewer && <div className="text-muted-foreground">โดย {reviewer}</div>}
       {note && <div>{note}</div>}
     </TableCell>
   );
@@ -98,7 +98,7 @@ export function OtRequestTable({
             <TableCell>
               <StatusBadge status={r.status} />
             </TableCell>
-            <Reviewer reviewer={r.reviewer} note={r.review_note} />
+            <Reviewer reviewer={r.reviewer_name} note={r.review_note} />
             {onCancel &&
               (r.status === "pending" ? <CancelCell id={r.id} action={onCancel} what="คำขอทำ OT" /> : <TableCell />)}
           </TableRow>
@@ -152,7 +152,7 @@ export function OtUsageTable({
             <TableCell>
               <StatusBadge status={u.status} />
             </TableCell>
-            <Reviewer reviewer={u.reviewer} note={u.review_note} />
+            <Reviewer reviewer={u.reviewer_name} note={u.review_note} />
             {onCancel &&
               (u.status === "pending" ? <CancelCell id={u.id} action={onCancel} what="คำขอใช้ OT" /> : <TableCell />)}
           </TableRow>
