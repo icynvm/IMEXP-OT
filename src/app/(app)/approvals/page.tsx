@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
-import { PERIOD_LABELS } from "@/lib/constants";
+import { APPROVER_ROLES, PERIOD_LABELS } from "@/lib/constants";
 import { getPendingApprovals } from "@/lib/data";
 import { formatDate, formatDateTime, formatHours, formatTime, fullName } from "@/lib/format";
 import type { PersonRef } from "@/lib/types";
@@ -38,14 +38,20 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
 }
 
 export default async function ApprovalsPage() {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireUser(APPROVER_ROLES);
   const { requests, usages } = await getPendingApprovals(user.id);
 
   return (
     <>
       <PageHeader
         title="รายการรออนุมัติ"
-        description={user.role === "admin" ? "คำขอของพนักงานทุกคน (ยกเว้นของคุณเอง)" : "คำขอของลูกทีมที่คุณดูแล"}
+        description={
+          user.role === "admin"
+            ? "คำขอของพนักงานทุกคน (คำขอของคุณเองอนุมัติอัตโนมัติ)"
+            : user.role === "department_head"
+              ? "คำขอของทุกคนในแผนกที่คุณดูแล (หัวหน้าทีมและลูกทีม)"
+              : "คำขอของลูกทีมที่คุณดูแล (คำขอของคุณเองอนุมัติอัตโนมัติ)"
+        }
       />
 
       <div className="grid gap-6">

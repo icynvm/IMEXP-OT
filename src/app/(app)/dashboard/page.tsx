@@ -7,7 +7,7 @@ import { StatCard } from "@/components/stat-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth";
+import { isApprover, requireUser } from "@/lib/auth";
 import { getMyAvailableBalances, getMyOtRequests, getMySummary, getProfileById } from "@/lib/data";
 import { formatHours, fullName } from "@/lib/format";
 
@@ -27,8 +27,8 @@ export default async function DashboardPage() {
       <PageHeader
         title={`สวัสดี คุณ${user.first_name}`}
         description={
-          user.role === "admin"
-            ? "สรุปชั่วโมง OT ของคุณ"
+          isApprover(user)
+            ? "สรุปชั่วโมง OT ของคุณ · คำขอของคุณอนุมัติอัตโนมัติ"
             : supervisor
               ? `หัวหน้าผู้อนุมัติ: ${fullName(supervisor)}`
               : "สรุปชั่วโมง OT ของคุณ"
@@ -51,11 +51,11 @@ export default async function DashboardPage() {
         }
       />
 
-      {user.role !== "admin" && !supervisor && (
+      {!isApprover(user) && !supervisor && (
         <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
           <TriangleAlert />
           <AlertDescription className="text-amber-800">
-            ยังไม่ได้กำหนดหัวหน้าให้คุณ คำขอของคุณจะส่งให้ผู้ดูแลระบบ (admin) พิจารณาแทน
+            ยังไม่ได้กำหนดหัวหน้าให้คุณ คำขอของคุณจะส่งให้หัวหน้าแผนก หรือผู้ดูแลระบบ (admin) พิจารณาแทน
           </AlertDescription>
         </Alert>
       )}

@@ -12,6 +12,9 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   profiles_employee_code_key: "รหัสพนักงานนี้มีผู้ใช้แล้ว",
   profiles_email_key: "อีเมลนี้มีผู้ใช้แล้ว",
   profiles_employee_code_format: "รหัสพนักงานใช้ได้เฉพาะ A-Z, 0-9, - และ _",
+  departments_name_key: "มีแผนกชื่อนี้อยู่แล้ว",
+  departments_head_key: "ผู้ใช้นี้เป็นหัวหน้าของแผนกอื่นอยู่แล้ว",
+  departments_name_len: "ชื่อแผนกต้องมี 1-100 ตัวอักษร",
 };
 
 /** ข้อความ error ที่เขียนเป็นภาษาไทยมาจากฟังก์ชันในฐานข้อมูลอยู่แล้ว */

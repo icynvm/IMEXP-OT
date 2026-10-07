@@ -2,21 +2,21 @@ import { CalendarCheck, Download, Filter, Hourglass, RotateCcw, TrendingUp, User
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
+import { MonthSelect } from "@/components/month-select";
 import { OtRequestTable, OtUsageTable } from "@/components/ot-tables";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
-import { ROLE_LABELS, STATUS_LABELS } from "@/lib/constants";
-import { getHistory, getManagedSummaries } from "@/lib/data";
+import { APPROVER_ROLES, ROLE_LABELS, STATUS_LABELS } from "@/lib/constants";
+import { getDepartments, getHistory, getManagedSummaries } from "@/lib/data";
 import { parseOverviewFilters } from "@/lib/filters";
-import { formatHours, formatMonth } from "@/lib/format";
+import { formatHours, formatMonth, fullName, todayTH } from "@/lib/format";
 
 export const metadata: Metadata = { title: "ภาพรวม" };
 
@@ -34,13 +34,18 @@ function CsvButton({ href }: { href: string }) {
 }
 
 export default async function OverviewPage({ searchParams }: PageProps<"/overview">) {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireUser(APPROVER_ROLES);
   const filters = parseOverviewFilters(await searchParams);
 
-  const [summaries, history] = await Promise.all([
+  const [summaries, history, departments] = await Promise.all([
     getManagedSummaries(user),
     getHistory(user, { from: filters.from, to: filters.to, employeeId: filters.employeeId }),
+    getDepartments(),
   ]);
+  // ชื่อแผนก / ชื่อหัวหน้าทีม สำหรับแสดงในตารางยอดสะสม
+  const deptName = new Map(departments.map((d) => [d.id, d.name]));
+  const personName = new Map(summaries.map((s) => [s.employee_id, fullName(s)]));
+  personName.set(user.id, "คุณ");
 
   // ตัวเลขสรุปของเดือนที่เลือก
   const approvedRequests = history.requests.filter((r) => r.status === "approved");
@@ -61,7 +66,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
   return (
     <>
       <PageHeader
-        title={user.role === "admin" ? "ภาพรวมทั้งหมด" : "ภาพรวมทีม"}
+        title={user.role === "admin" ? "ภาพรวมทั้งหมด" : user.role === "department_head" ? "ภาพรวมแผนก" : "ภาพรวมทีม"}
         description={`ข้อมูลประจำเดือน ${formatMonth(filters.month)}`}
       />
 
@@ -71,7 +76,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
           <form className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr_auto]">
             <div className="grid gap-2">
               <Label htmlFor="month">เดือน</Label>
-              <Input id="month" name="month" type="month" defaultValue={filters.month} />
+              <MonthSelect id="month" name="month" defaultValue={filters.month} current={todayTH().slice(0, 7)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status">สถานะ</Label>
@@ -145,6 +150,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
                   <TableRow>
                     <TableHead>พนักงาน</TableHead>
                     <TableHead>บทบาท</TableHead>
+                    <TableHead>แผนก / หัวหน้าทีม</TableHead>
                     <TableHead className="text-right">ได้รับอนุมัติ</TableHead>
                     <TableHead className="text-right">ใช้แล้ว</TableHead>
                     <TableHead className="text-right">จองไว้</TableHead>
@@ -168,6 +174,12 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{ROLE_LABELS[s.role]}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div>{(s.department_id && deptName.get(s.department_id)) || "-"}</div>
+                        <div className="text-muted-foreground">
+                          {s.supervisor_id ? `หัวหน้า: ${personName.get(s.supervisor_id) ?? "-"}` : "ไม่มีหัวหน้า"}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{formatHours(s.earned_hours)}</TableCell>
                       <TableCell className="text-muted-foreground text-right tabular-nums">{formatHours(s.used_hours)}</TableCell>

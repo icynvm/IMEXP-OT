@@ -3,7 +3,8 @@
  * ถ้าเพิ่มคอลัมน์ในฐานข้อมูล ให้มาเพิ่มที่นี่ด้วย
  */
 
-export type Role = "admin" | "supervisor" | "employee";
+/** supervisor = หัวหน้าทีม, department_head = หัวหน้าแผนก */
+export type Role = "admin" | "department_head" | "supervisor" | "employee";
 export type OtPeriod = "before_work" | "after_work";
 export type ApprovalStatus = "pending" | "approved" | "rejected" | "cancelled";
 
@@ -15,7 +16,26 @@ export type Profile = {
   email: string;
   role: Role;
   supervisor_id: string | null;
+  department_id: string | null;
   is_active: boolean;
+};
+
+/** แผนก */
+export type Department = {
+  id: string;
+  name: string;
+  head_id: string | null;
+};
+
+/** 1 รายการในตารางวันหยุด (ฟังก์ชัน leave_calendar) */
+export type LeaveCalendarEntry = {
+  usage_id: string;
+  use_date: string;
+  employee_id: string;
+  first_name: string;
+  last_name: string;
+  department_name: string | null;
+  can_view_detail: boolean;
 };
 
 /** ข้อมูลพนักงานแบบย่อ (ใช้แสดงชื่อในตาราง) */
@@ -93,6 +113,7 @@ export type EmployeeOtSummary = {
   used_hours: number;
   reserved_hours: number;
   remaining_hours: number;
+  department_id: string | null;
 };
 
 /** ผลลัพธ์ที่ Server Action ส่งกลับไปให้ฟอร์มแสดง */

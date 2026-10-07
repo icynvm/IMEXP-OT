@@ -2,6 +2,8 @@
  * ฟังก์ชันจัดรูปแบบวันที่ / เวลา / ชั่วโมง ให้เป็นภาษาไทย
  * ทุกอย่างอิงเวลาประเทศไทย (Asia/Bangkok)
  */
+import { THAI_MONTHS } from "@/lib/constants";
+
 const TZ = "Asia/Bangkok";
 
 /** วันนี้ในรูปแบบ YYYY-MM-DD (เวลาไทย) */
@@ -61,9 +63,16 @@ export function monthRange(month: string): { from: string; to: string } {
   return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, "0")}` };
 }
 
-/** "2026-10" -> "ตุลาคม 2569" */
+
+/** "2026-10" -> "ตุลาคม 2569" (ปี พ.ศ.) */
 export function formatMonth(month: string): string {
-  return new Intl.DateTimeFormat("th-TH", { timeZone: TZ, month: "long", year: "numeric" }).format(
-    new Date(`${month}-15T12:00:00+07:00`),
-  );
+  const [y, m] = month.split("-").map(Number);
+  return `${THAI_MONTHS[m - 1]} ${y + 543}`;
+}
+
+/** เลื่อนเดือน: shiftMonth("2026-10", 1) -> "2026-11" */
+export function shiftMonth(month: string, delta: number): string {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }

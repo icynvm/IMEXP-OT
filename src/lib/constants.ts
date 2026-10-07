@@ -6,9 +6,19 @@ export const WORK_END_TIME = "18:00";
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "ผู้ดูแลระบบ",
-  supervisor: "หัวหน้างาน",
+  department_head: "หัวหน้าแผนก",
+  supervisor: "หัวหน้าทีม",
   employee: "พนักงาน",
 };
+
+/** บทบาทที่อนุมัติคำขอของคนอื่นได้ และคำขอของตัวเองอนุมัติอัตโนมัติ */
+export const APPROVER_ROLES: Role[] = ["admin", "department_head", "supervisor"];
+
+/** ชื่อเดือนภาษาไทย (index 0 = มกราคม) */
+export const THAI_MONTHS = [
+  "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+  "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+];
 
 export const PERIOD_LABELS: Record<OtPeriod, string> = {
   before_work: `ก่อนเริ่มงาน (ก่อน ${WORK_START_TIME})`,

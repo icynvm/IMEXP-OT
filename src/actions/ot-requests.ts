@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { isApprover, requireUser } from "@/lib/auth";
 import { notifyOtRequestSubmitted } from "@/lib/email/notify";
 import { toThaiMessage } from "@/lib/errors";
 import { setFlash } from "@/lib/flash";
@@ -13,7 +13,7 @@ import { formValues, invalid, otRequestSchema } from "@/lib/validation";
 
 /** ยื่นคำขอทำ OT */
 export async function submitOtRequest(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireUser();
+  const user = await requireUser();
   const values = formValues(formData);
   const parsed = otRequestSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return invalid(parsed.error, values);
@@ -34,7 +34,8 @@ export async function submitOtRequest(_prev: ActionState, formData: FormData): P
   after(() => notifyOtRequestSubmitted(id as string));
 
   revalidatePath("/", "layout");
-  await setFlash("ส่งคำขอทำ OT เรียบร้อย รอหัวหน้าอนุมัติ");
+  // หัวหน้าทีม / หัวหน้าแผนก / admin: ฐานข้อมูลอนุมัติให้อัตโนมัติ
+  await setFlash(isApprover(user) ? "ส่งคำขอทำ OT เรียบร้อย ระบบอนุมัติให้อัตโนมัติ" : "ส่งคำขอทำ OT เรียบร้อย รอหัวหน้าอนุมัติ");
   redirect("/ot-requests");
 }
 

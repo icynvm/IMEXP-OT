@@ -14,18 +14,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ROLE_LABELS } from "@/lib/constants";
-import type { ActionState, Profile, Role } from "@/lib/types";
+import type { ActionState, Department, Profile, Role } from "@/lib/types";
 
-/** ค่าในช่อง "หัวหน้า" เมื่อไม่ได้เลือกใคร (Radix Select ห้ามใช้ค่าว่าง) */
+/** ค่าในช่อง "หัวหน้า" / "แผนก" เมื่อไม่ได้เลือก (Radix Select ห้ามใช้ค่าว่าง) */
 const NO_SUPERVISOR = "none";
 
 export function UserForm({
   profile,
   supervisors,
+  departments,
   isSelf,
 }: {
   profile: Profile;
   supervisors: Profile[];
+  departments: Department[];
   isSelf: boolean;
 }) {
   const [state, action] = useActionState<ActionState, FormData>(updateUser, {});
@@ -34,6 +36,7 @@ export function UserForm({
   // ช่องเลือกเก็บค่าใน state + ส่งผ่าน hidden input เพื่อให้ค่าที่เลือกไม่หายเมื่อบันทึกไม่สำเร็จ
   const [role, setRole] = useState<string>(profile.role);
   const [supervisorId, setSupervisorId] = useState<string>(profile.supervisor_id ?? NO_SUPERVISOR);
+  const [departmentId, setDepartmentId] = useState<string>(profile.department_id ?? NO_SUPERVISOR);
   const [isActive, setIsActive] = useState(profile.is_active);
   const v = state.values;
 
@@ -59,7 +62,11 @@ export function UserForm({
         label="บทบาท"
         htmlFor="role"
         error={e.role}
-        hint={isSelf ? "ไม่สามารถเปลี่ยนบทบาทของตัวเองได้" : "หัวหน้างาน = อนุมัติคำขอของลูกทีม / ผู้ดูแลระบบ = เห็นและจัดการได้ทั้งหมด"}
+        hint={
+          isSelf
+            ? "ไม่สามารถเปลี่ยนบทบาทของตัวเองได้"
+            : "หัวหน้าทีม = อนุมัติลูกทีม / หัวหน้าแผนก = อนุมัติทุกคนในแผนก / ผู้ดูแลระบบ = ทุกอย่าง (หัวหน้าทุกระดับ คำขอของตัวเองอนุมัติอัตโนมัติ)"
+        }
         required
       >
         <input type="hidden" name="role" value={role} />
@@ -77,6 +84,23 @@ export function UserForm({
         </Select>
       </FormField>
 
+      <FormField label="แผนก" htmlFor="department_id" error={e.department_id} hint="หัวหน้าแผนกจะเห็นและอนุมัติคำขอของทุกคนในแผนก">
+        <input type="hidden" name="department_id" value={departmentId} />
+        <Select value={departmentId} onValueChange={setDepartmentId}>
+          <SelectTrigger id="department_id" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_SUPERVISOR}>ไม่มีแผนก</SelectItem>
+            {departments.map((d) => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+
       <FormField label="หัวหน้าผู้อนุมัติ" htmlFor="supervisor_id" error={e.supervisor_id} hint="ผู้ที่จะได้รับอีเมลและอนุมัติคำขอของผู้ใช้นี้">
         <input type="hidden" name="supervisor_id" value={supervisorId} />
         <Select value={supervisorId} onValueChange={setSupervisorId}>
@@ -84,7 +108,7 @@ export function UserForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NO_SUPERVISOR}>ไม่มี (ส่งให้ admin พิจารณา)</SelectItem>
+            <SelectItem value={NO_SUPERVISOR}>ไม่มี (ส่งให้หัวหน้าแผนก / admin พิจารณา)</SelectItem>
             {supervisors.map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.employee_code} · {s.first_name} {s.last_name} ({ROLE_LABELS[s.role]})

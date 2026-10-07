@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  Building2,
   CalendarClock,
+  CalendarDays,
   ClipboardCheck,
   Clock3,
   History,
@@ -20,9 +22,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ROLE_LABELS } from "@/lib/constants";
+import { APPROVER_ROLES, ROLE_LABELS } from "@/lib/constants";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const isApprover = (user: Profile) => APPROVER_ROLES.includes(user.role);
 
 type NavItem = { href: string; label: string; icon: LucideIcon; badge?: number };
 
@@ -32,15 +36,21 @@ function navItems(user: Profile, pendingCount: number): NavItem[] {
     { href: "/dashboard", label: "หน้าหลัก", icon: LayoutDashboard },
     { href: "/ot-requests", label: "คำขอทำ OT", icon: Clock3 },
     { href: "/ot-usages", label: "ใช้ชั่วโมง OT", icon: CalendarClock },
+    { href: "/calendar", label: "ตารางวันหยุด", icon: CalendarDays },
   ];
-  if (user.role === "admin" || user.role === "supervisor") {
+  if (isApprover(user)) {
+    const overviewLabel =
+      user.role === "admin" ? "ภาพรวมทั้งหมด" : user.role === "department_head" ? "ภาพรวมแผนก" : "ภาพรวมทีม";
     items.push(
       { href: "/approvals", label: "รออนุมัติ", icon: ClipboardCheck, badge: pendingCount },
-      { href: "/overview", label: user.role === "admin" ? "ภาพรวมทั้งหมด" : "ภาพรวมทีม", icon: History },
+      { href: "/overview", label: overviewLabel, icon: History },
     );
   }
   if (user.role === "admin") {
-    items.push({ href: "/admin/users", label: "จัดการผู้ใช้", icon: Users });
+    items.push(
+      { href: "/admin/users", label: "จัดการผู้ใช้", icon: Users },
+      { href: "/admin/departments", label: "แผนก", icon: Building2 },
+    );
   }
   return items;
 }

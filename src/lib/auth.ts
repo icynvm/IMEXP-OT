@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { APPROVER_ROLES } from "@/lib/constants";
 import type { Profile, Role } from "@/lib/types";
 
 /**
@@ -17,7 +18,7 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, employee_code, first_name, last_name, email, role, supervisor_id, is_active")
+    .select("id, employee_code, first_name, last_name, email, role, supervisor_id, department_id, is_active")
     .eq("id", userId)
     .maybeSingle<Profile>();
 
@@ -28,7 +29,7 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
  * ใช้ที่หัวทุกหน้า/ทุก Server Action ที่ต้อง login
  *   requireUser()                       -> ทุกบทบาท
  *   requireUser(["admin"])              -> เฉพาะ admin
- *   requireUser(["admin", "supervisor"]) -> admin และหัวหน้างาน
+ *   requireUser(APPROVER_ROLES)          -> admin, หัวหน้าแผนก, หัวหน้าทีม
  * ถ้าไม่มีสิทธิ์ จะถูกพาไปหน้าอื่นอัตโนมัติ
  */
 export async function requireUser(roles?: Role[]): Promise<Profile> {
@@ -39,6 +40,7 @@ export async function requireUser(roles?: Role[]): Promise<Profile> {
   return profile;
 }
 
+/** หัวหน้าทีม / หัวหน้าแผนก / admin: อนุมัติคำขอของคนอื่นได้ และคำขอของตัวเองอนุมัติอัตโนมัติ */
 export function isApprover(profile: Pick<Profile, "role">): boolean {
-  return profile.role === "admin" || profile.role === "supervisor";
+  return APPROVER_ROLES.includes(profile.role);
 }

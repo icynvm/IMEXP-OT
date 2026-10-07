@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { APPROVER_ROLES } from "@/lib/constants";
 import { notifyOtRequestReviewed, notifyOtUsageReviewed } from "@/lib/email/notify";
 import { toThaiMessage } from "@/lib/errors";
 import { setFlash } from "@/lib/flash";
@@ -20,7 +21,7 @@ export async function review(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireUser(["admin", "supervisor"]);
+  await requireUser(APPROVER_ROLES);
   const parsed = reviewSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return invalid(parsed.error);
   const { id, decision, note } = parsed.data;

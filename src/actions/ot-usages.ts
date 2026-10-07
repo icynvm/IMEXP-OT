@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { isApprover, requireUser } from "@/lib/auth";
 import { notifyOtUsageSubmitted } from "@/lib/email/notify";
 import { toThaiMessage } from "@/lib/errors";
 import { setFlash } from "@/lib/flash";
@@ -16,7 +16,7 @@ import { formValues, invalid, otUsageSchema } from "@/lib/validation";
  * ฟอร์มส่งช่อง "alloc:<id คำขอ OT>" = จำนวนชั่วโมงที่จะตัดจากคำขอนั้น
  */
 export async function submitOtUsage(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireUser();
+  const user = await requireUser();
   const values = formValues(formData);
 
   const allocations: { ot_request_id: string; hours: number }[] = [];
@@ -45,7 +45,8 @@ export async function submitOtUsage(_prev: ActionState, formData: FormData): Pro
   after(() => notifyOtUsageSubmitted(id as string));
 
   revalidatePath("/", "layout");
-  await setFlash("ส่งคำขอใช้ OT เรียบร้อย รอหัวหน้าอนุมัติ");
+  // หัวหน้าทีม / หัวหน้าแผนก / admin: ฐานข้อมูลอนุมัติให้อัตโนมัติ
+  await setFlash(isApprover(user) ? "ส่งคำขอใช้ OT เรียบร้อย ระบบอนุมัติให้อัตโนมัติ" : "ส่งคำขอใช้ OT เรียบร้อย รอหัวหน้าอนุมัติ");
   redirect("/ot-usages");
 }
 

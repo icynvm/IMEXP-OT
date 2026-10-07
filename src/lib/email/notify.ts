@@ -9,7 +9,8 @@ import { renderEmail } from "./template";
 
 /**
  * การแจ้งเตือนทางอีเมล
- *   - พนักงานยื่นคำขอ   -> ส่งหาหัวหน้าของพนักงาน (ถ้าไม่มีหัวหน้า ส่งหา admin ทุกคน)
+ *   - พนักงานยื่นคำขอ   -> ส่งหาหัวหน้าผู้อนุมัติ → ถ้าไม่มี ส่งหาหัวหน้าแผนก → ถ้าไม่มี ส่งหา admin ทุกคน
+ *   - หัวหน้ายื่นเอง   -> อนุมัติอัตโนมัติ ไม่ต้องส่งอีเมล
  *   - หัวหน้าพิจารณาแล้ว -> ส่งหาพนักงานเจ้าของคำขอ
  *
  * ใช้ admin client เพราะต้องอ่านอีเมลของคนอื่น (ผู้ใช้ทั่วไปอ่านไม่ได้ตาม RLS)
@@ -24,9 +25,11 @@ type Person = {
   role: Role;
   is_active: boolean;
   supervisor_id: string | null;
+  department_id: string | null;
 };
 
-const PERSON_FIELDS = "id, first_name, last_name, employee_code, email, role, is_active, supervisor_id";
+const PERSON_FIELDS = "id, first_name, last_name, employee_code, email, role, is_active, supervisor_id, department_id";
+const APPROVER_ROLE_NAMES: Role[] = ["supervisor", "department_head", "admin"];
 
 async function getPerson(id: string): Promise<Person | null> {
   const { data } = await createAdminClient()
@@ -39,12 +42,24 @@ async function getPerson(id: string): Promise<Person | null> {
 
 /** อีเมลผู้อนุมัติของพนักงานคนนี้ */
 async function getApproverEmails(employee: Person): Promise<string[]> {
+  // 1) หัวหน้าผู้อนุมัติ
   if (employee.supervisor_id) {
     const supervisor = await getPerson(employee.supervisor_id);
-    if (supervisor?.is_active && (supervisor.role === "supervisor" || supervisor.role === "admin")) {
+    if (supervisor?.is_active && APPROVER_ROLE_NAMES.includes(supervisor.role)) {
       return [supervisor.email];
     }
   }
+  // 2) หัวหน้าแผนก
+  if (employee.department_id) {
+    const { data: dept } = await createAdminClient()
+      .from("departments")
+      .select("head_id")
+      .eq("id", employee.department_id)
+      .maybeSingle<{ head_id: string | null }>();
+    const head = dept?.head_id && dept.head_id !== employee.id ? await getPerson(dept.head_id) : null;
+    if (head?.is_active) return [head.email];
+  }
+  // 3) admin ทุกคน
   const { data: admins } = await createAdminClient()
     .from("profiles")
     .select("email")
@@ -96,7 +111,7 @@ function otRequestRows(r: OtRequestRow): [string, string][] {
 
 export async function notifyOtRequestSubmitted(requestId: string) {
   const request = await getOtRequest(requestId);
-  if (!request) return;
+  if (!request || request.status !== "pending") return; // อนุมัติอัตโนมัติแล้ว ไม่ต้องแจ้งใคร
   const employee = await getPerson(request.employee_id);
   if (!employee) return;
 
@@ -184,7 +199,7 @@ function otUsageRows(u: OtUsageRow): [string, string][] {
 
 export async function notifyOtUsageSubmitted(usageId: string) {
   const usage = await getOtUsage(usageId);
-  if (!usage) return;
+  if (!usage || usage.status !== "pending") return; // อนุมัติอัตโนมัติแล้ว ไม่ต้องแจ้งใคร
   const employee = await getPerson(usage.employee_id);
   if (!employee) return;
 

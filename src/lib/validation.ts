@@ -135,10 +135,18 @@ export const adminUserSchema = z.object({
   first_name: nameField("ชื่อ"),
   last_name: nameField("นามสกุล"),
   employee_code: employeeCodeField,
-  role: z.enum(["admin", "supervisor", "employee"], "กรุณาเลือกบทบาท"),
+  role: z.enum(["admin", "department_head", "supervisor", "employee"], "กรุณาเลือกบทบาท"),
   // "none" = ไม่มีหัวหน้า (ค่าจากช่องเลือกในฟอร์ม)
   supervisor_id: z.union([z.uuid(), z.literal(""), z.literal("none")]).transform((v) => (v && v !== "none" ? v : null)),
+  // "none" = ไม่มีแผนก
+  department_id: z.union([z.uuid(), z.literal(""), z.literal("none")]).transform((v) => (v && v !== "none" ? v : null)),
   is_active: z.boolean(),
+});
+
+export const departmentSchema = z.object({
+  id: z.union([z.uuid(), z.literal("")]).transform((v) => v || null),
+  name: z.string().trim().min(1, "กรุณากรอกชื่อแผนก").max(100, "ชื่อแผนกยาวเกินไป"),
+  head_id: z.union([z.uuid(), z.literal(""), z.literal("none")]).transform((v) => (v && v !== "none" ? v : null)),
 });
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth";
-import { PERIOD_SHORT_LABELS, ROLE_LABELS, STATUS_LABELS } from "@/lib/constants";
+import { APPROVER_ROLES, PERIOD_SHORT_LABELS, ROLE_LABELS, STATUS_LABELS } from "@/lib/constants";
 import { getHistory, getManagedSummaries } from "@/lib/data";
 import { parseOverviewFilters } from "@/lib/filters";
 import { formatTime, fullName } from "@/lib/format";
@@ -22,7 +22,7 @@ function toCsv(rows: (string | number | null | undefined)[][]): string {
 }
 
 export async function GET(request: Request) {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireUser(APPROVER_ROLES);
   const params = Object.fromEntries(new URL(request.url).searchParams);
   const filters = parseOverviewFilters(params);
   const type = params.type;

@@ -33,7 +33,10 @@
 
 ```
 ├── supabase/
-│   ├── migrations/20261007000000_init.sql  ★ ฐานข้อมูลทั้งหมด: ตาราง, กฎ, สิทธิ์, ฟังก์ชัน
+│   ├── migrations/                         ★ ฐานข้อมูล (รันตามลำดับชื่อไฟล์ ไฟล์ละครั้ง)
+│   │   ├── 20261007000000_init.sql         ตาราง, กฎ, สิทธิ์, ฟังก์ชันหลัก
+│   │   └── 20261010000000_departments_…    แผนก, หัวหน้าแผนก, อนุมัติอัตโนมัติ, ตารางวันหยุด
+│   ├── snippets/assign-roles.sql           สคริปต์ตั้งบทบาท/แผนก/หัวหน้า หลายคนพร้อมกัน
 │   ├── templates/                          แม่แบบอีเมลยืนยันสมัคร / ลืมรหัสผ่าน (ภาษาไทย)
 │   └── config.toml                         ค่าตั้งค่าสำหรับรัน Supabase ในเครื่อง (ไม่มีผลกับของจริง)
 │
@@ -56,10 +59,12 @@
 │   │       │   └── new/                    /ot-requests/new  ฟอร์มขอทำ OT
 │   │       ├── ot-usages/                  /ot-usages        รายการใช้ OT
 │   │       │   └── new/                    /ot-usages/new    ฟอร์มขอใช้ OT
+│   │       ├── calendar/                   /calendar         ตารางวันหยุด (ทุกคน)
 │   │       ├── approvals/                  /approvals        หน้าอนุมัติ (หัวหน้า/admin)
 │   │       ├── overview/                   /overview         ภาพรวม + ตัวกรอง
 │   │       │   └── export/route.ts         ดาวน์โหลด CSV
-│   │       └── admin/users/                /admin/users      จัดการผู้ใช้ (admin)
+│   │       ├── admin/users/                /admin/users      จัดการผู้ใช้ (admin)
+│   │       └── admin/departments/          /admin/departments จัดการแผนก (admin)
 │   │
 │   ├── actions/                            ★ สิ่งที่เกิดขึ้นเมื่อกดปุ่ม "ส่ง" (ทำงานฝั่ง server)
 │   │   ├── auth.ts                         login / สมัคร / logout / ลืมรหัสผ่าน
@@ -144,7 +149,8 @@ alter table public.ot_requests add constraint ot_requests_period_window check (
 
 | ตาราง / view | เก็บอะไร |
 | --- | --- |
-| `profiles` | ผู้ใช้: รหัสพนักงาน, ชื่อ, อีเมล, บทบาท, หัวหน้า, เปิด/ปิดบัญชี |
+| `profiles` | ผู้ใช้: รหัสพนักงาน, ชื่อ, อีเมล, บทบาท, หัวหน้า, แผนก, เปิด/ปิดบัญชี |
+| `departments` | แผนก + หัวหน้าแผนก |
 | `ot_requests` | คำขอทำ OT |
 | `ot_usages` | คำขอใช้ OT |
 | `ot_usage_allocations` | คำขอใช้ OT แต่ละรายการ ตัดจากคำขอ OT ไหน กี่ชั่วโมง |
