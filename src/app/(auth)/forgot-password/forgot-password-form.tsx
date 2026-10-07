@@ -1,21 +1,24 @@
 "use client";
 
+import { Mail } from "lucide-react";
 import { useActionState } from "react";
 import { forgotPassword } from "@/actions/auth";
-import { ActionMessage } from "@/components/ui/alert";
-import { Field, Input } from "@/components/ui/field";
-import { SubmitButton } from "@/components/ui/submit-button";
+import { ActionMessage } from "@/components/action-message";
+import { FormField } from "@/components/form-field";
+import { SubmitButton } from "@/components/submit-button";
+import { Input } from "@/components/ui/input";
 import type { ActionState } from "@/lib/types";
 
 export function ForgotPasswordForm() {
   const [state, action] = useActionState<ActionState, FormData>(forgotPassword, {});
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} className="grid gap-4">
       <ActionMessage state={state} />
-      <Field label="อีเมล" htmlFor="email" error={state.errors?.email}>
-        <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={state.values?.email} />
-      </Field>
+      <FormField label="อีเมล" htmlFor="email" error={state.errors?.email}>
+        <Input id="email" name="email" type="email" autoComplete="email" placeholder="name@company.com" required defaultValue={state.values?.email} />
+      </FormField>
       <SubmitButton pendingText="กำลังส่ง..." className="w-full">
+        <Mail />
         ส่งลิงก์ตั้งรหัสผ่านใหม่
       </SubmitButton>
     </form>

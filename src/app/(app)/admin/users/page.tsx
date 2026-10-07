@@ -1,11 +1,14 @@
+import { Pencil, Search, TriangleAlert, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Flash } from "@/components/flash";
-import { buttonClass } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/field";
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState, Table, Td, Th } from "@/components/ui/table";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/constants";
 import { getAllProfiles } from "@/lib/data";
@@ -15,7 +18,7 @@ export const metadata: Metadata = { title: "จัดการผู้ใช้
 
 export default async function AdminUsersPage({ searchParams }: PageProps<"/admin/users">) {
   await requireUser(["admin"]);
-  const { message, q } = await searchParams;
+  const { q } = await searchParams;
   const search = typeof q === "string" ? q.trim().toLowerCase() : "";
 
   const profiles = await getAllProfiles();
@@ -29,59 +32,75 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
 
   return (
     <>
-      <Flash message={message} />
       <PageHeader
         title="จัดการผู้ใช้"
-        description="กำหนดบทบาท, หัวหน้าผู้อนุมัติ และเปิด/ปิดการใช้งานบัญชี (ผู้ใช้ใหม่สมัครเองที่หน้าสมัครสมาชิก)"
+        description="กำหนดบทบาท หัวหน้าผู้อนุมัติ และเปิด/ปิดการใช้งานบัญชี (ผู้ใช้ใหม่สมัครเองที่หน้าสมัครสมาชิก)"
       />
       {noSupervisor > 0 && (
-        <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          มีผู้ใช้ {noSupervisor} คนที่ยังไม่ได้กำหนดหัวหน้า (คำขอของคนกลุ่มนี้จะส่งให้ admin พิจารณา)
-        </p>
+        <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
+          <TriangleAlert />
+          <AlertDescription className="text-amber-800">
+            มีผู้ใช้ {noSupervisor} คนที่ยังไม่ได้กำหนดหัวหน้า (คำขอของคนกลุ่มนี้จะส่งให้ admin พิจารณา)
+          </AlertDescription>
+        </Alert>
       )}
       <Card>
-        <form className="mb-4 flex max-w-md gap-2">
-          <Input name="q" defaultValue={search} placeholder="ค้นหา รหัส / ชื่อ / อีเมล" aria-label="ค้นหา" />
-          <button type="submit" className={buttonClass("secondary")}>
-            ค้นหา
-          </button>
-        </form>
-        {rows.length === 0 ? (
-          <EmptyState>ไม่พบผู้ใช้</EmptyState>
-        ) : (
-          <Table>
-            <thead>
-              <tr>
-                <Th>รหัสพนักงาน</Th>
-                <Th>ชื่อ-นามสกุล</Th>
-                <Th>อีเมล</Th>
-                <Th>บทบาท</Th>
-                <Th>หัวหน้า</Th>
-                <Th>สถานะ</Th>
-                <Th />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {rows.map((p) => (
-                <tr key={p.id} className={p.is_active ? "" : "text-gray-400"}>
-                  <Td className="whitespace-nowrap">{p.employee_code}</Td>
-                  <Td className="whitespace-nowrap">{fullName(p)}</Td>
-                  <Td>{p.email}</Td>
-                  <Td className="whitespace-nowrap">{ROLE_LABELS[p.role]}</Td>
-                  <Td className="whitespace-nowrap">
-                    {p.supervisor_id ? fullName(byId.get(p.supervisor_id)) : <span className="text-amber-700">-</span>}
-                  </Td>
-                  <Td className="whitespace-nowrap">{p.is_active ? "ใช้งาน" : "ปิดใช้งาน"}</Td>
-                  <Td>
-                    <Link href={`/admin/users/${p.id}`} className={buttonClass("secondary", "sm")}>
-                      แก้ไข
-                    </Link>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
+        <CardContent className="grid gap-4">
+          <form className="relative max-w-sm">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input name="q" defaultValue={search} placeholder="ค้นหา รหัส / ชื่อ / อีเมล" aria-label="ค้นหา" className="pl-9" />
+          </form>
+          {rows.length === 0 ? (
+            <EmptyState icon={Users}>ไม่พบผู้ใช้</EmptyState>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ผู้ใช้</TableHead>
+                  <TableHead>บทบาท</TableHead>
+                  <TableHead>หัวหน้า</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((p) => (
+                  <TableRow key={p.id} className={p.is_active ? "" : "opacity-50"}>
+                    <TableCell>
+                      <div className="font-medium">{fullName(p)}</div>
+                      <div className="text-muted-foreground text-xs">
+                        {p.employee_code} · {p.email}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={p.role === "employee" ? "outline" : "secondary"}>{ROLE_LABELS[p.role]}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {p.supervisor_id ? fullName(byId.get(p.supervisor_id)) : <span className="text-amber-600">ยังไม่กำหนด</span>}
+                    </TableCell>
+                    <TableCell>
+                      {p.is_active ? (
+                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                          ใช้งาน
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">ปิดใช้งาน</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/users/${p.id}`}>
+                          <Pencil />
+                          แก้ไข
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
       </Card>
     </>
   );

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/page-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { getAllProfiles } from "@/lib/data";
 import { fullName } from "@/lib/format";
@@ -23,11 +23,13 @@ export default async function EditUserPage({ params }: PageProps<"/admin/users/[
   );
 
   return (
-    <>
+    <div className="mx-auto max-w-2xl">
       <PageHeader title={`แก้ไขผู้ใช้: ${fullName(profile)}`} description={profile.email} />
-      <Card className="max-w-2xl">
-        <UserForm profile={profile} supervisors={supervisors} isSelf={profile.id === admin.id} />
+      <Card>
+        <CardContent>
+          <UserForm profile={profile} supervisors={supervisors} isSelf={profile.id === admin.id} />
+        </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

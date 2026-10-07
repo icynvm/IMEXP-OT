@@ -50,7 +50,7 @@
 │   │   │   ├── reset-password/             /auth/reset-password  ตั้งรหัสผ่านใหม่
 │   │   │   └── inactive/                   หน้าแจ้งว่าบัญชีถูกปิด
 │   │   └── (app)/                          หน้าที่ต้อง login
-│   │       ├── layout.tsx                  แถบเมนูด้านบน (เมนูแต่ละบทบาท)
+│   │       ├── layout.tsx                  โหลดผู้ใช้ + ครอบด้วยเมนู (components/app-shell.tsx)
 │   │       ├── dashboard/                  /dashboard        หน้าหลัก + ยอดคงเหลือ
 │   │       ├── ot-requests/                /ot-requests      รายการคำขอทำ OT
 │   │       │   └── new/                    /ot-requests/new  ฟอร์มขอทำ OT
@@ -69,7 +69,11 @@
 │   │   └── admin.ts                        แก้ไขผู้ใช้
 │   │
 │   ├── components/                         ชิ้นส่วนหน้าจอที่ใช้ซ้ำ
-│   │   ├── ui/                             ปุ่ม, ช่องกรอก, การ์ด, ตาราง, ป้ายสถานะ
+│   │   ├── ui/                             ★ คอมโพเนนต์พื้นฐานจาก shadcn/ui (ปุ่ม, ช่องกรอก, การ์ด, ตาราง, Dialog …)
+│   │   ├── app-shell.tsx                   เมนูซ้าย (จอใหญ่) / เมนูเลื่อนออก (มือถือ) + ไอคอนเมนู
+│   │   ├── confirm-dialog.tsx              กล่องยืนยันก่อนทำรายการ (ยกเลิก / อนุมัติ / ไม่อนุมัติ)
+│   │   ├── flash-dialog.tsx                กล่องแจ้ง "สำเร็จ" หลังบันทึก
+│   │   ├── action-form.tsx                 ฟอร์มที่ไม่ล้างค่าหลังบันทึกไม่สำเร็จ (ใช้กับฟอร์มที่มีช่องเลือก)
 │   │   └── ot-tables.tsx                   ตารางคำขอ OT / การใช้ OT / ยอดคงเหลือ
 │   │
 │   └── lib/                                ★ ตัวช่วยและค่าตั้งค่า
@@ -100,8 +104,10 @@
 | เนื้อหา/หัวเรื่องอีเมลแจ้งเตือน | `src/lib/email/notify.ts` (หน้าตา: `template.ts`) |
 | อีเมลยืนยันสมัคร / ลืมรหัสผ่าน | `supabase/templates/*.html` แล้ววางใน Supabase Dashboard |
 | ข้อความ error ของฟอร์ม | `src/lib/validation.ts` |
-| สีปุ่ม / หน้าตา | `src/components/ui/` (ใช้ [Tailwind CSS](https://tailwindcss.com/docs) — ชื่อ class เช่น `bg-blue-600` = พื้นสีน้ำเงิน) |
-| เมนูด้านบน | `src/app/(app)/layout.tsx` |
+| สีหลักของเว็บ | `--primary` ใน `src/app/globals.css` |
+| หน้าตาปุ่ม / การ์ด / ตาราง | `src/components/ui/` (ใช้ [Tailwind CSS](https://tailwindcss.com/docs) — ชื่อ class เช่น `bg-blue-600` = พื้นสีน้ำเงิน) |
+| เมนู / ไอคอนเมนู | `src/components/app-shell.tsx` (เลือกไอคอนได้ที่ [lucide.dev/icons](https://lucide.dev/icons)) |
+| ข้อความในกล่องยืนยัน / กล่องแจ้งเตือน | `title` / `description` ที่ส่งให้ `ConfirmDialog` ในแต่ละหน้า / ข้อความ `?message=` ใน `src/actions/` |
 | **เวลาเข้า-เลิกงาน (09:00 / 18:00)** | 3 ที่: `src/lib/constants.ts` + constraint `ot_requests_period_window` ในฐานข้อมูล (ทำ migration ใหม่) + ข้อความใน `src/lib/errors.ts` |
 | กฎการใช้ OT (เช่น เพิ่มวันหมดอายุ) | ฟังก์ชัน `submit_ot_usage` ในฐานข้อมูล (ทำ migration ใหม่) |
 
@@ -123,6 +129,16 @@ alter table public.ot_requests add constraint ot_requests_period_window check (
 2. แก้ `WORK_END_TIME` ใน `src/lib/constants.ts` เป็น `"17:30"`
 3. แก้ข้อความ `ot_requests_period_window` ใน `src/lib/errors.ts`
 4. `npm run check` และ `npm run build` ต้องผ่าน → push ขึ้น GitHub
+
+## หน้าตาเว็บ (UI)
+
+| ใช้อะไร | ทำอะไร |
+| --- | --- |
+| [shadcn/ui](https://ui.shadcn.com) | คอมโพเนนต์พื้นฐาน อยู่ใน `src/components/ui/` เป็นโค้ดของเราเอง แก้ได้ตรง ๆ |
+| [Radix UI](https://www.radix-ui.com) | กล่อง Dialog / ช่องเลือก / เมนูมือถือ (shadcn ใช้ Radix อยู่ข้างใน) |
+| [Lucide](https://lucide.dev/icons) | ไอคอนทั้งเว็บ เช่น `import { Clock3 } from "lucide-react"` |
+
+อยากได้คอมโพเนนต์ shadcn เพิ่ม: `npx shadcn@latest add <ชื่อ>` (เช่น `tooltip`) แล้วไฟล์จะมาอยู่ใน `src/components/ui/`
 
 ## ตารางในฐานข้อมูล
 

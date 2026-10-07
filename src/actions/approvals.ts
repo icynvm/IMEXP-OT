@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { notifyOtRequestReviewed, notifyOtUsageReviewed } from "@/lib/email/notify";
 import { toThaiMessage } from "@/lib/errors";
@@ -38,5 +39,6 @@ export async function review(
   after(() => (kind === "request" ? notifyOtRequestReviewed(id) : notifyOtUsageReviewed(id)));
 
   revalidatePath("/", "layout");
-  return { ok: true, message: decision === "approve" ? "อนุมัติแล้ว" : "ไม่อนุมัติแล้ว" };
+  const message = decision === "approve" ? "อนุมัติเรียบร้อย ระบบแจ้งพนักงานทางอีเมลแล้ว" : "บันทึกการไม่อนุมัติเรียบร้อย ระบบแจ้งพนักงานทางอีเมลแล้ว";
+  redirect(`/approvals?message=${encodeURIComponent(message)}`);
 }

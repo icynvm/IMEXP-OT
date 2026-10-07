@@ -136,7 +136,8 @@ export const adminUserSchema = z.object({
   last_name: nameField("นามสกุล"),
   employee_code: employeeCodeField,
   role: z.enum(["admin", "supervisor", "employee"], "กรุณาเลือกบทบาท"),
-  supervisor_id: z.union([z.uuid(), z.literal("")]).transform((v) => v || null),
+  // "none" = ไม่มีหัวหน้า (ค่าจากช่องเลือกในฟอร์ม)
+  supervisor_id: z.union([z.uuid(), z.literal(""), z.literal("none")]).transform((v) => (v && v !== "none" ? v : null)),
   is_active: z.boolean(),
 });
 

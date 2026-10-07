@@ -36,13 +36,13 @@ export async function submitOtRequest(_prev: ActionState, formData: FormData): P
   redirect(`/ot-requests?message=${encodeURIComponent("ส่งคำขอทำ OT เรียบร้อย รอหัวหน้าอนุมัติ")}`);
 }
 
-/** ยกเลิกคำขอทำ OT (ได้เฉพาะที่ยังรออนุมัติ) */
-export async function cancelOtRequest(id: string): Promise<ActionState> {
+/** ยกเลิกคำขอทำ OT (ได้เฉพาะที่ยังรออนุมัติ) — ฟอร์มส่งช่อง id มา */
+export async function cancelOtRequest(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireUser();
   const supabase = await createClient();
-  const { error } = await supabase.rpc("cancel_ot_request", { p_id: id });
+  const { error } = await supabase.rpc("cancel_ot_request", { p_id: String(formData.get("id")) });
   if (error) return { ok: false, message: toThaiMessage(error) };
 
   revalidatePath("/", "layout");
-  return { ok: true, message: "ยกเลิกคำขอแล้ว" };
+  redirect(`/ot-requests?message=${encodeURIComponent("ยกเลิกคำขอทำ OT แล้ว")}`);
 }

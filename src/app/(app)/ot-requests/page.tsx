@@ -1,35 +1,38 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cancelOtRequest } from "@/actions/ot-requests";
-import { Flash } from "@/components/flash";
 import { OtRequestTable } from "@/components/ot-tables";
-import { buttonClass } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { getMyOtRequests } from "@/lib/data";
 
 export const metadata: Metadata = { title: "คำขอทำ OT" };
 
-export default async function OtRequestsPage({ searchParams }: PageProps<"/ot-requests">) {
-  const { message } = await searchParams;
+export default async function OtRequestsPage() {
   const user = await requireUser();
   const requests = await getMyOtRequests(user.id);
 
   return (
     <>
-      <Flash message={message} />
       <PageHeader
-        title="คำขอทำ OT ของฉัน"
-        description="เมื่อหัวหน้าอนุมัติ ชั่วโมงจะถูกเพิ่มเข้ายอดสะสม เพื่อนำไปใช้ภายหลัง"
+        title="คำขอทำ OT"
+        description="เมื่อหัวหน้าอนุมัติ ชั่วโมงจะเข้ายอดสะสมเพื่อนำไปใช้ภายหลัง"
         action={
-          <Link href="/ot-requests/new" className={buttonClass()}>
-            + ขอทำ OT
-          </Link>
+          <Button asChild>
+            <Link href="/ot-requests/new">
+              <Plus />
+              ขอทำ OT
+            </Link>
+          </Button>
         }
       />
       <Card>
-        <OtRequestTable rows={requests} onCancel={cancelOtRequest} />
+        <CardContent>
+          <OtRequestTable rows={requests} onCancel={cancelOtRequest} />
+        </CardContent>
       </Card>
     </>
   );

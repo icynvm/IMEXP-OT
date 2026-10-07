@@ -1,19 +1,19 @@
+import { CalendarCheck, CalendarClock, Hourglass, Plus, TrendingUp, TriangleAlert, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Flash } from "@/components/flash";
 import { BalanceTable, OtRequestTable } from "@/components/ot-tables";
-import { Alert } from "@/components/ui/alert";
-import { buttonClass } from "@/components/ui/button";
-import { Card, StatCard } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { getMyAvailableBalances, getMyOtRequests, getMySummary, getProfileById } from "@/lib/data";
 import { formatHours, fullName } from "@/lib/format";
 
 export const metadata: Metadata = { title: "หน้าหลัก" };
 
-export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
-  const { message } = await searchParams;
+export default async function DashboardPage() {
   const user = await requireUser();
   const [summary, balances, requests, supervisor] = await Promise.all([
     getMySummary(user.id),
@@ -24,61 +24,77 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   return (
     <>
-      <Flash message={message} />
       <PageHeader
         title={`สวัสดี คุณ${user.first_name}`}
-        description="สรุปชั่วโมง OT ของคุณ"
+        description={
+          user.role === "admin"
+            ? "สรุปชั่วโมง OT ของคุณ"
+            : supervisor
+              ? `หัวหน้าผู้อนุมัติ: ${fullName(supervisor)}`
+              : "สรุปชั่วโมง OT ของคุณ"
+        }
         action={
-          <div className="flex gap-2">
-            <Link href="/ot-requests/new" className={buttonClass()}>
-              + ขอทำ OT
-            </Link>
-            <Link href="/ot-usages/new" className={buttonClass("secondary")}>
-              ขอใช้ชั่วโมง OT
-            </Link>
-          </div>
+          <>
+            <Button variant="outline" asChild>
+              <Link href="/ot-usages/new">
+                <CalendarClock />
+                ขอใช้ชั่วโมง
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/ot-requests/new">
+                <Plus />
+                ขอทำ OT
+              </Link>
+            </Button>
+          </>
         }
       />
 
-      {user.role !== "admin" && (
-        <div className="mb-4">
-          {supervisor ? (
-            <p className="text-sm text-gray-600">
-              หัวหน้าผู้อนุมัติของคุณ: <span className="font-medium text-gray-900">{fullName(supervisor)}</span>
-            </p>
-          ) : (
-            <Alert tone="warning">
-              ยังไม่ได้กำหนดหัวหน้าให้คุณ คำขอของคุณจะส่งให้ผู้ดูแลระบบ (admin) พิจารณาแทน
-            </Alert>
-          )}
-        </div>
+      {user.role !== "admin" && !supervisor && (
+        <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
+          <TriangleAlert />
+          <AlertDescription className="text-amber-800">
+            ยังไม่ได้กำหนดหัวหน้าให้คุณ คำขอของคุณจะส่งให้ผู้ดูแลระบบ (admin) พิจารณาแทน
+          </AlertDescription>
+        </Alert>
       )}
 
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="ชั่วโมงคงเหลือ (ใช้ได้)" value={formatHours(summary?.remaining_hours)} tone="green" />
-        <StatCard label="ได้รับอนุมัติทั้งหมด" value={formatHours(summary?.earned_hours)} tone="blue" />
-        <StatCard label="ใช้ไปแล้ว" value={formatHours(summary?.used_hours)} />
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="ชั่วโมงคงเหลือ" value={formatHours(summary?.remaining_hours)} icon={Wallet} tone="green" hint="ใช้ได้ทันที" />
+        <StatCard label="ได้รับอนุมัติทั้งหมด" value={formatHours(summary?.earned_hours)} icon={TrendingUp} tone="blue" />
+        <StatCard label="ใช้ไปแล้ว" value={formatHours(summary?.used_hours)} icon={CalendarCheck} />
         <StatCard
-          label="จองไว้ (รออนุมัติการใช้)"
+          label="จองไว้"
           value={formatHours(summary?.reserved_hours)}
+          icon={Hourglass}
           tone="amber"
-          hint="จะคืนเข้ายอดคงเหลือ ถ้าไม่อนุมัติหรือยกเลิก"
+          hint="รออนุมัติการใช้ คืนยอดถ้าไม่อนุมัติ"
         />
       </div>
 
-      <div className="space-y-6">
-        <Card title="ชั่วโมง OT ที่ยังเหลือ (แยกตามวันที่ทำ OT)">
-          <BalanceTable rows={balances} />
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>ชั่วโมง OT ที่ยังเหลือ</CardTitle>
+            <CardDescription>แยกตามวันที่ทำ OT ที่อนุมัติแล้ว</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BalanceTable rows={balances} />
+          </CardContent>
         </Card>
-        <Card
-          title="คำขอทำ OT ล่าสุด"
-          action={
-            <Link href="/ot-requests" className="text-sm text-blue-700 hover:underline">
-              ดูทั้งหมด
-            </Link>
-          }
-        >
-          <OtRequestTable rows={requests.slice(0, 5)} />
+        <Card>
+          <CardHeader>
+            <CardTitle>คำขอทำ OT ล่าสุด</CardTitle>
+            <CardAction>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/ot-requests">ดูทั้งหมด</Link>
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <OtRequestTable rows={requests.slice(0, 5)} />
+          </CardContent>
         </Card>
       </div>
     </>

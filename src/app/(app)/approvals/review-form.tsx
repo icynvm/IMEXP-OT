@@ -1,36 +1,59 @@
 "use client";
 
-import { useActionState } from "react";
+import { Check, X } from "lucide-react";
 import { review } from "@/actions/approvals";
-import { ActionMessage } from "@/components/ui/alert";
-import { Input } from "@/components/ui/field";
-import { SubmitButton } from "@/components/ui/submit-button";
-import type { ActionState } from "@/lib/types";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { FormField } from "@/components/form-field";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
-/** ปุ่ม อนุมัติ / ไม่อนุมัติ พร้อมช่องหมายเหตุ */
-export function ReviewForm({ kind, id }: { kind: "request" | "usage"; id: string }) {
-  const [state, action] = useActionState<ActionState, FormData>(review.bind(null, kind), {});
-
-  if (state.ok) return <ActionMessage state={state} />;
-
+/**
+ * ปุ่ม อนุมัติ / ไม่อนุมัติ — กดแล้วเปิดกล่องยืนยัน (Radix AlertDialog)
+ * ไม่อนุมัติ ต้องระบุเหตุผลเสมอ (ตรวจซ้ำที่ Server Action)
+ */
+export function ReviewForm({ kind, id, summary }: { kind: "request" | "usage"; id: string; summary: string }) {
+  const action = review.bind(null, kind);
   return (
-    <form action={action} className="space-y-2">
-      <ActionMessage state={state} />
-      <input type="hidden" name="id" value={id} />
-      <Input name="note" placeholder="หมายเหตุ (จำเป็นถ้าไม่อนุมัติ)" maxLength={500} aria-label="หมายเหตุ" />
-      {state.errors?.note?.map((m) => (
-        <p key={m} className="text-xs text-red-600">
-          {m}
-        </p>
-      ))}
-      <div className="flex gap-2">
-        <SubmitButton name="decision" value="approve" variant="success" size="sm" pendingText="...">
-          อนุมัติ
-        </SubmitButton>
-        <SubmitButton name="decision" value="reject" variant="danger" size="sm" pendingText="...">
-          ไม่อนุมัติ
-        </SubmitButton>
-      </div>
-    </form>
+    <div className="flex gap-2">
+      <ConfirmDialog
+        trigger={
+          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+            <X />
+            ไม่อนุมัติ
+          </Button>
+        }
+        title="ไม่อนุมัติคำขอนี้?"
+        description={summary}
+        confirmLabel="ยืนยันไม่อนุมัติ"
+        destructive
+        action={action}
+        fields={{ id, decision: "reject" }}
+      >
+        {(state) => (
+          <FormField label="เหตุผลที่ไม่อนุมัติ" htmlFor={`note-reject-${id}`} error={state.errors?.note} required>
+            <Textarea id={`note-reject-${id}`} name="note" maxLength={500} placeholder="พนักงานจะเห็นเหตุผลนี้ในอีเมล" />
+          </FormField>
+        )}
+      </ConfirmDialog>
+      <ConfirmDialog
+        trigger={
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+            <Check />
+            อนุมัติ
+          </Button>
+        }
+        title="อนุมัติคำขอนี้?"
+        description={summary}
+        confirmLabel="ยืนยันอนุมัติ"
+        action={action}
+        fields={{ id, decision: "approve" }}
+      >
+        {(state) => (
+          <FormField label="หมายเหตุ (ไม่บังคับ)" htmlFor={`note-approve-${id}`} error={state.errors?.note}>
+            <Textarea id={`note-approve-${id}`} name="note" maxLength={500} />
+          </FormField>
+        )}
+      </ConfirmDialog>
+    </div>
   );
 }

@@ -47,13 +47,13 @@ export async function submitOtUsage(_prev: ActionState, formData: FormData): Pro
   redirect(`/ot-usages?message=${encodeURIComponent("ส่งคำขอใช้ OT เรียบร้อย รอหัวหน้าอนุมัติ")}`);
 }
 
-/** ยกเลิกคำขอใช้ OT (ชั่วโมงที่จองไว้จะคืนเข้ายอดคงเหลือ) */
-export async function cancelOtUsage(id: string): Promise<ActionState> {
+/** ยกเลิกคำขอใช้ OT (ชั่วโมงที่จองไว้จะคืนเข้ายอดคงเหลือ) — ฟอร์มส่งช่อง id มา */
+export async function cancelOtUsage(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireUser();
   const supabase = await createClient();
-  const { error } = await supabase.rpc("cancel_ot_usage", { p_id: id });
+  const { error } = await supabase.rpc("cancel_ot_usage", { p_id: String(formData.get("id")) });
   if (error) return { ok: false, message: toThaiMessage(error) };
 
   revalidatePath("/", "layout");
-  return { ok: true, message: "ยกเลิกคำขอแล้ว ชั่วโมงคืนเข้ายอดคงเหลือ" };
+  redirect(`/ot-usages?message=${encodeURIComponent("ยกเลิกคำขอแล้ว ชั่วโมงที่จองไว้คืนเข้ายอดคงเหลือ")}`);
 }
