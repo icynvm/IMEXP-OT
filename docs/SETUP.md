@@ -91,6 +91,28 @@
 
 `NEXT_PUBLIC_SUPABASE_URL` ต้องเป็นแค่ `https://xxxx.supabase.co` — **ไม่มี** `/rest/v1` หรือ `/` ต่อท้าย
 
+### ใช้ subdomain ของบริษัท (DNS อยู่ที่ Cloudflare)
+
+ตัวอย่างใช้ `ot.your-company.com`
+
+1. **Vercel** → Project → **Settings → Domains** → Add → `ot.your-company.com`
+   Vercel จะแสดงค่า CNAME ที่ต้องใช้ (คัดลอกค่าที่ Vercel แสดง **ตรงตัว** — แต่ละโปรเจกต์อาจไม่เหมือนกัน)
+2. **Cloudflare** → เลือกโดเมน → **DNS → Records**
+   - ลบ record เดิมของชื่อ `ot` (A / AAAA / CNAME) ที่ไม่ใช่ของ Vercel ออกก่อน
+   - Add record: Type `CNAME` · Name `ot` · Target = ค่าจาก Vercel · **Proxy status = DNS only (เมฆสีเทา)**
+3. รอ 1–10 นาที → กลับไป Vercel Domains ต้องขึ้น **Valid Configuration** และ Vercel จะออก SSL ให้เอง
+4. เปลี่ยนค่าเป็นโดเมนใหม่ แล้ว **Redeploy**:
+   `NEXT_PUBLIC_SITE_URL=https://ot.your-company.com`
+5. Supabase → Authentication → URL Configuration: แก้ **Site URL** และเพิ่ม Redirect URL `https://ot.your-company.com/**` (ขั้นที่ 4)
+
+| อาการ | สาเหตุ | วิธีแก้ |
+| --- | --- | --- |
+| `DNS_PROBE_FINISHED_NXDOMAIN` / หาโดเมนไม่เจอ | ยังไม่มี record หรือโดเมนไม่ได้ใช้ nameserver ของ Cloudflare | ตรวจ record ข้อ 2 / Cloudflare → Overview สถานะโดเมนต้องเป็น **Active** |
+| Vercel ขึ้น **Invalid Configuration** | Target ผิด หรือเปิดเมฆสีส้ม | ใช้ค่าจาก Vercel ตรงตัว + ตั้งเป็น **DNS only** |
+| `ERR_TOO_MANY_REDIRECTS` | เปิดเมฆสีส้มคู่กับ SSL แบบ Flexible | ตั้งเป็น DNS only (หรือ Cloudflare → SSL/TLS → **Full (strict)**) |
+| `404: DEPLOYMENT_NOT_FOUND` | ยังไม่ได้เพิ่มโดเมนใน Vercel ข้อ 1 | เพิ่มโดเมนใน Vercel |
+| เข้าเว็บได้ แต่ลิงก์ในอีเมลพาไป URL เก่า | ยังไม่แก้ข้อ 4–5 | แก้ค่าแล้ว Redeploy |
+
 ---
 
 ## ขั้นที่ 4 — บอก Supabase ว่าเว็บอยู่ที่ไหน
