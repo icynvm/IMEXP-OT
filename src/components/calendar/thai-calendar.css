@@ -87,3 +87,28 @@
   opacity: 0.35;
   pointer-events: none;
 }
+
+/* ปฏิทินขนาดใหญ่ (หน้าตารางวันหยุด): ช่องกว้างขึ้น ตัวเลขใหญ่ขึ้น แต่ไม่สูงเกินจอ */
+.thai-calendar-lg [data-calendar-label] {
+  font-size: 1.125rem;
+}
+.thai-calendar-lg .lm-calendar-weekdays > div::after {
+  font-size: 0.875rem;
+}
+.thai-calendar-lg .lm-calendar-content {
+  gap: 4px;
+}
+.thai-calendar-lg .lm-calendar-content > div {
+  aspect-ratio: auto;
+  min-height: 3.25rem;
+  height: clamp(3.25rem, 9vw, 5.5rem);
+  font-size: 1rem;
+}
+.thai-calendar-lg .lm-calendar-content > div[data-label]::before {
+  font-size: 1rem;
+}
+.thai-calendar-lg .lm-calendar-content > div[data-leave="true"]::after {
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+}

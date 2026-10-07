@@ -22,7 +22,7 @@ export default async function NewOtUsagePage() {
     <div className="mx-auto max-w-4xl">
       <PageHeader
         title="ขอใช้ชั่วโมง OT"
-        description="เลือกว่าจะใช้ชั่วโมงจาก OT วันไหน ชั่วโมงที่เหลือจะเก็บไว้ใช้ครั้งต่อไปได้"
+        description="กรอกจำนวนชั่วโมงที่ต้องการใช้ ระบบตัดจาก OT ที่เก่าที่สุดก่อน ชั่วโมงที่เหลือเก็บไว้ใช้ครั้งต่อไปได้"
       />
       <Card>
         <CardContent>

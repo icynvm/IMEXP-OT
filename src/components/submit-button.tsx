@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 export function SubmitButton({
   children,
   pendingText = "กำลังบันทึก...",
+  disabled,
   ...props
 }: React.ComponentProps<typeof Button> & { pendingText?: string }) {
   const { pending: formPending } = useFormStatus();
   const pending = formPending || use(ActionFormPendingContext);
   return (
-    <Button type="submit" disabled={pending} {...props}>
+    <Button type="submit" disabled={pending || disabled} {...props}>
       {pending ? (
         <>
           <Loader2 className="animate-spin" />
