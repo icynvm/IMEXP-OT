@@ -35,7 +35,8 @@
 ├── supabase/
 │   ├── migrations/                         ★ ฐานข้อมูล (รันตามลำดับชื่อไฟล์ ไฟล์ละครั้ง)
 │   │   ├── 20261007000000_init.sql         ตาราง, กฎ, สิทธิ์, ฟังก์ชันหลัก
-│   │   └── 20261010000000_departments_…    แผนก, หัวหน้าแผนก, อนุมัติอัตโนมัติ, ตารางวันหยุด
+│   │   ├── 20261010000000_departments_…    แผนก, หัวหน้าแผนก, อนุมัติอัตโนมัติ, ตารางวันหยุด
+│   │   └── 20261012000000_public_holidays  วันหยุดนักขัตฤกษ์ (ข้อมูลปี 2569–2570)
 │   ├── snippets/assign-roles.sql           สคริปต์ตั้งบทบาท/แผนก/หัวหน้า หลายคนพร้อมกัน
 │   ├── templates/                          แม่แบบอีเมลยืนยันสมัคร / ลืมรหัสผ่าน (ภาษาไทย)
 │   └── config.toml                         ค่าตั้งค่าสำหรับรัน Supabase ในเครื่อง (ไม่มีผลกับของจริง)
@@ -64,7 +65,8 @@
 │   │       ├── overview/                   /overview         ภาพรวม + ตัวกรอง
 │   │       │   └── export/route.ts         ดาวน์โหลด CSV
 │   │       ├── admin/users/                /admin/users      จัดการผู้ใช้ (admin)
-│   │       └── admin/departments/          /admin/departments จัดการแผนก (admin)
+│   │       ├── admin/departments/          /admin/departments จัดการแผนก (admin)
+│   │       └── admin/holidays/             /admin/holidays   จัดการวันหยุดนักขัตฤกษ์ (admin)
 │   │
 │   ├── actions/                            ★ สิ่งที่เกิดขึ้นเมื่อกดปุ่ม "ส่ง" (ทำงานฝั่ง server)
 │   │   ├── auth.ts                         login / สมัคร / logout / ลืมรหัสผ่าน
@@ -75,6 +77,10 @@
 │   │
 │   ├── components/                         ชิ้นส่วนหน้าจอที่ใช้ซ้ำ
 │   │   ├── ui/                             ★ คอมโพเนนต์พื้นฐานจาก shadcn/ui (ปุ่ม, ช่องกรอก, การ์ด, ตาราง, Dialog …)
+│   │   ├── calendar/                       ★ ปฏิทินทั้งหมด (ใช้ไลบรารี CalendarJS)
+│   │   │   ├── thai-calendar.tsx           ปฏิทินภาษาไทย + เครื่องหมายวันหยุด/คนหยุด
+│   │   │   ├── thai-calendar.css           หน้าตาปฏิทิน (สีวันหยุด, จุดคนหยุด, ชื่อวันภาษาไทย)
+│   │   │   └── date-picker.tsx             ช่องเลือกวันที่ ("7 ต.ค. 2569") ใช้ในทุกฟอร์ม
 │   │   ├── app-shell.tsx                   เมนูซ้าย (จอใหญ่) / เมนูเลื่อนออก (มือถือ) + ไอคอนเมนู
 │   │   ├── confirm-dialog.tsx              กล่องยืนยันก่อนทำรายการ (ยกเลิก / อนุมัติ / ไม่อนุมัติ)
 │   │   ├── flash-dialog.tsx                กล่องแจ้ง "สำเร็จ" หลังบันทึก
@@ -142,6 +148,7 @@ alter table public.ot_requests add constraint ot_requests_period_window check (
 | [shadcn/ui](https://ui.shadcn.com) | คอมโพเนนต์พื้นฐาน อยู่ใน `src/components/ui/` เป็นโค้ดของเราเอง แก้ได้ตรง ๆ |
 | [Radix UI](https://www.radix-ui.com) | กล่อง Dialog / ช่องเลือก / เมนูมือถือ (shadcn ใช้ Radix อยู่ข้างใน) |
 | [Lucide](https://lucide.dev/icons) | ไอคอนทั้งเว็บ เช่น `import { Clock3 } from "lucide-react"` |
+| [CalendarJS](https://calendarjs.com) | ปฏิทินทั้งหมด (ตารางวันหยุด + ช่องเลือกวันที่) ห่อไว้ใน `src/components/calendar/` |
 
 อยากได้คอมโพเนนต์ shadcn เพิ่ม: `npx shadcn@latest add <ชื่อ>` (เช่น `tooltip`) แล้วไฟล์จะมาอยู่ใน `src/components/ui/`
 
@@ -151,6 +158,7 @@ alter table public.ot_requests add constraint ot_requests_period_window check (
 | --- | --- |
 | `profiles` | ผู้ใช้: รหัสพนักงาน, ชื่อ, อีเมล, บทบาท, หัวหน้า, แผนก, เปิด/ปิดบัญชี |
 | `departments` | แผนก + หัวหน้าแผนก |
+| `public_holidays` | วันหยุดนักขัตฤกษ์ (admin แก้ได้ที่เมนู "วันหยุดนักขัตฤกษ์") |
 | `ot_requests` | คำขอทำ OT |
 | `ot_usages` | คำขอใช้ OT |
 | `ot_usage_allocations` | คำขอใช้ OT แต่ละรายการ ตัดจากคำขอ OT ไหน กี่ชั่วโมง |

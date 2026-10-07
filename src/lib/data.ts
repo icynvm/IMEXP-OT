@@ -5,6 +5,7 @@ import type {
   Department,
   EmployeeOtSummary,
   LeaveCalendarEntry,
+  PublicHoliday,
   OtRequest,
   OtRequestBalance,
   OtUsage,
@@ -232,4 +233,19 @@ export async function getLeaveDetails(usageIds: string[]): Promise<OtUsage[]> {
   const supabase = await createClient();
   const result = await supabase.from("ot_usages").select(OT_USAGE_FIELDS).in("id", usageIds);
   return check(result, "รายละเอียดวันหยุด") as unknown as OtUsage[];
+}
+
+/** วันหยุดนักขัตฤกษ์ (ทุกคนอ่านได้) — ไม่ระบุช่วง = ทั้งหมด */
+export async function getHolidays(from?: string, to?: string): Promise<PublicHoliday[]> {
+  const supabase = await createClient();
+  let query = supabase.from("public_holidays").select("holiday_date, name");
+  if (from) query = query.gte("holiday_date", from);
+  if (to) query = query.lte("holiday_date", to);
+  const result = await query.order("holiday_date");
+  return check(result, "วันหยุดนักขัตฤกษ์") as PublicHoliday[];
+}
+
+/** แปลงรายการวันหยุดเป็น { "YYYY-MM-DD": "ชื่อวันหยุด" } สำหรับปฏิทิน */
+export function holidayMap(holidays: PublicHoliday[]): Record<string, string> {
+  return Object.fromEntries(holidays.map((h) => [h.holiday_date, h.name]));
 }

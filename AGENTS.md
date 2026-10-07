@@ -32,6 +32,9 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
 - Confirmations use `ConfirmDialog` (Radix AlertDialog). Success/error feedback: the action calls `setFlash()`
   (short-lived cookie, `src/lib/flash.ts`) then `redirect()`s to a clean URL; `FlashDialog` in the layouts shows it.
   Keep URLs clean: never put messages in query strings.
+- All calendars use CalendarJS (`@calendarjs/react`) via `src/components/calendar/` (`ThaiCalendar`, `DatePicker`).
+  The wrapper renders its own Thai header (BE year), Thai weekday labels via CSS, and marks holiday/leave days by
+  decorating cells (the library's `data` markers don't render in this version). Never use `<input type="date">`.
 - `src/app/(app)/loading.tsx` gives instant skeleton feedback on navigation; nav items show a spinner via `useLinkStatus`.
 - Forms that contain Radix Select/RadioGroup/Checkbox must use `ActionForm` + controlled state + hidden inputs:
   React resets `<form action>` after submit and Radix's form-reset listeners would revert the user's choices.

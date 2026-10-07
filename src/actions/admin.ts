@@ -7,7 +7,7 @@ import { toThaiMessage } from "@/lib/errors";
 import { setFlash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/types";
-import { adminUserSchema, departmentSchema, formValues, invalid } from "@/lib/validation";
+import { adminUserSchema, departmentSchema, formValues, holidaySchema, invalid } from "@/lib/validation";
 
 /** admin แก้ไขข้อมูลผู้ใช้: ชื่อ, รหัสพนักงาน, บทบาท, หัวหน้า, แผนก, เปิด/ปิดการใช้งาน */
 export async function updateUser(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -69,4 +69,36 @@ export async function deleteDepartment(_prev: ActionState, formData: FormData): 
   revalidatePath("/", "layout");
   await setFlash("ลบแผนกเรียบร้อย");
   redirect("/admin/departments");
+}
+
+/** admin เพิ่ม / แก้ชื่อวันหยุดนักขัตฤกษ์ */
+export async function saveHoliday(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireUser(["admin"]);
+  const values = formValues(formData);
+  const parsed = holidaySchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return invalid(parsed.error, values);
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_save_holiday", {
+    p_date: parsed.data.holiday_date,
+    p_name: parsed.data.name,
+  });
+  if (error) return { ok: false, message: toThaiMessage(error), values };
+
+  revalidatePath("/", "layout");
+  await setFlash("บันทึกวันหยุดเรียบร้อย");
+  redirect(`/admin/holidays?year=${parsed.data.holiday_date.slice(0, 4)}`);
+}
+
+/** admin ลบวันหยุดนักขัตฤกษ์ — ฟอร์มส่งช่อง holiday_date มา */
+export async function deleteHoliday(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireUser(["admin"]);
+  const date = String(formData.get("holiday_date"));
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_delete_holiday", { p_date: date });
+  if (error) return { ok: false, message: toThaiMessage(error) };
+
+  revalidatePath("/", "layout");
+  await setFlash("ลบวันหยุดเรียบร้อย");
+  redirect(`/admin/holidays?year=${date.slice(0, 4)}`);
 }

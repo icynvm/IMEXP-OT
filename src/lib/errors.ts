@@ -15,6 +15,7 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   departments_name_key: "มีแผนกชื่อนี้อยู่แล้ว",
   departments_head_key: "ผู้ใช้นี้เป็นหัวหน้าของแผนกอื่นอยู่แล้ว",
   departments_name_len: "ชื่อแผนกต้องมี 1-100 ตัวอักษร",
+  public_holidays_name_len: "ชื่อวันหยุดต้องมี 1-200 ตัวอักษร",
 };
 
 /** ข้อความ error ที่เขียนเป็นภาษาไทยมาจากฟังก์ชันในฐานข้อมูลอยู่แล้ว */

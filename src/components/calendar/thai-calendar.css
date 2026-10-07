@@ -1,0 +1,80 @@
+/*
+ * ปรับหน้าตาปฏิทิน CalendarJS ให้เข้ากับเว็บ (shadcn) และเป็นภาษาไทย
+ * ตัวเลือก .lm-calendar-* มาจากไลบรารี CalendarJS
+ */
+
+/* ซ่อนหัวปฏิทินของไลบรารี (ใช้หัวภาษาไทยของเราแทน) */
+.thai-calendar .lm-calendar-header > div:first-child,
+.thai-calendar .lm-calendar-options,
+.thai-calendar .lm-calendar-footer {
+  display: none !important;
+}
+
+.thai-calendar .lm-calendar {
+  font-family: inherit;
+  background: transparent;
+}
+.thai-calendar .lm-calendar-container {
+  padding: 0;
+}
+
+/* ชื่อวันภาษาไทย (ไลบรารีแสดงแค่ตัวอักษรแรก ซึ่งภาษาไทยซ้ำกัน) */
+.thai-calendar .lm-calendar-weekdays > div {
+  font-size: 0 !important;
+}
+.thai-calendar .lm-calendar-weekdays > div::after {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.thai-calendar .lm-calendar-weekdays > div:nth-child(1)::after { content: "อา"; }
+.thai-calendar .lm-calendar-weekdays > div:nth-child(2)::after { content: "จ"; }
+.thai-calendar .lm-calendar-weekdays > div:nth-child(3)::after { content: "อ"; }
+.thai-calendar .lm-calendar-weekdays > div:nth-child(4)::after { content: "พ"; }
+.thai-calendar .lm-calendar-weekdays > div:nth-child(5)::after { content: "พฤ"; }
+.thai-calendar .lm-calendar-weekdays > div:nth-child(6)::after { content: "ศ"; }
+.thai-calendar .lm-calendar-weekdays > div:nth-child(7)::after { content: "ส"; }
+
+/* ช่องวัน */
+.thai-calendar .lm-calendar-content > div {
+  position: relative;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+.thai-calendar .lm-calendar-content > div[data-today="true"] {
+  font-weight: 700;
+  color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.thai-calendar .lm-calendar-content > div[data-selected="true"] {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* วันหยุดนักขัตฤกษ์: ตัวเลขสีแดง + พื้นชมพูอ่อน */
+.thai-calendar .lm-calendar-content > div[data-holiday="true"] {
+  color: oklch(0.577 0.245 27.325);
+  background: oklch(0.971 0.013 17.38);
+}
+
+/* วันที่มีคนหยุด: จุดสีน้ำเงินด้านล่าง */
+.thai-calendar .lm-calendar-content > div[data-leave="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: 12%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 9999px;
+  background: var(--primary);
+}
+.thai-calendar .lm-calendar-content > div[data-selected="true"][data-leave="true"]::after {
+  background: var(--primary-foreground);
+}
+
+/* วันที่เลือกไม่ได้ */
+.thai-calendar .lm-calendar-content > div[data-blocked="true"] {
+  opacity: 0.35;
+  pointer-events: none;
+}

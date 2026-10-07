@@ -143,6 +143,11 @@ export const adminUserSchema = z.object({
   is_active: z.boolean(),
 });
 
+export const holidaySchema = z.object({
+  holiday_date: dateField("วันที่"),
+  name: z.string().trim().min(1, "กรุณากรอกชื่อวันหยุด").max(200, "ชื่อวันหยุดยาวเกินไป"),
+});
+
 export const departmentSchema = z.object({
   id: z.union([z.uuid(), z.literal("")]).transform((v) => v || null),
   name: z.string().trim().min(1, "กรุณากรอกชื่อแผนก").max(100, "ชื่อแผนกยาวเกินไป"),

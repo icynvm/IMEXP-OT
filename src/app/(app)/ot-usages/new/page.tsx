@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
-import { getMyAvailableBalances } from "@/lib/data";
+import { getHolidays, getMyAvailableBalances, holidayMap } from "@/lib/data";
 import { todayTH } from "@/lib/format";
 import { OtUsageForm } from "./ot-usage-form";
 
@@ -41,7 +41,7 @@ export default async function NewOtUsagePage() {
               ยังไม่มีชั่วโมง OT ที่ใช้ได้ (ต้องเป็น OT ที่อนุมัติแล้วและทำไปแล้ว)
             </EmptyState>
           ) : (
-            <OtUsageForm balances={balances} today={today} />
+            <OtUsageForm balances={balances} today={today} holidays={holidayMap(await getHolidays())} />
           )}
         </CardContent>
       </Card>

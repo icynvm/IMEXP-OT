@@ -11,6 +11,7 @@ import {
   Loader2,
   LogOut,
   Menu,
+  PartyPopper,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -50,6 +51,7 @@ function navItems(user: Profile, pendingCount: number): NavItem[] {
     items.push(
       { href: "/admin/users", label: "จัดการผู้ใช้", icon: Users },
       { href: "/admin/departments", label: "แผนก", icon: Building2 },
+      { href: "/admin/holidays", label: "วันหยุดนักขัตฤกษ์", icon: PartyPopper },
     );
   }
   return items;

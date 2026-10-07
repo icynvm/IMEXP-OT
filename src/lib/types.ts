@@ -27,6 +27,9 @@ export type Department = {
   head_id: string | null;
 };
 
+/** วันหยุดนักขัตฤกษ์ */
+export type PublicHoliday = { holiday_date: string; name: string };
+
 /** 1 รายการในตารางวันหยุด (ฟังก์ชัน leave_calendar) */
 export type LeaveCalendarEntry = {
   usage_id: string;

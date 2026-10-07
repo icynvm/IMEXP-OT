@@ -22,6 +22,8 @@
    - จากนั้นทำแบบเดียวกันกับไฟล์ถัดไปใน `supabase/migrations/` **ตามลำดับชื่อไฟล์** (ไฟล์ละครั้ง):
      [`20261010000000_departments_leave_calendar.sql`](../supabase/migrations/20261010000000_departments_leave_calendar.sql)
      (แผนก, หัวหน้าแผนก, อนุมัติอัตโนมัติ, ตารางวันหยุด)
+     แล้วต่อด้วย [`20261012000000_public_holidays.sql`](../supabase/migrations/20261012000000_public_holidays.sql)
+     (วันหยุดนักขัตฤกษ์ ปี 2569–2570)
    - ถ้าเคยรันไฟล์แรกไปแล้ว ให้รันเฉพาะไฟล์ที่ยังไม่เคยรัน
 5. ไปที่ **Project Settings → API Keys** จดค่าเหล่านี้ไว้ใช้ในขั้นที่ 3:
    - **Project URL** (เช่น `https://abcd1234.supabase.co`)

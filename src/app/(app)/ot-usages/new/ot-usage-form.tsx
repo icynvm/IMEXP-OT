@@ -4,7 +4,9 @@ import { Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { submitOtUsage } from "@/actions/ot-usages";
+import { ActionForm } from "@/components/action-form";
 import { ActionMessage } from "@/components/action-message";
+import { DatePicker } from "@/components/calendar/date-picker";
 import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
@@ -21,11 +23,20 @@ import type { ActionState, OtRequestBalance } from "@/lib/types";
  * 1) กรอก "จำนวนชั่วโมงที่ต้องการใช้" แล้วกด "แบ่งให้อัตโนมัติ" -> ระบบตัดจาก OT เก่าสุดก่อน
  * 2) หรือกรอกเองทีละแถวว่าจะตัดจาก OT วันไหนกี่ชั่วโมง
  */
-export function OtUsageForm({ balances, today }: { balances: OtRequestBalance[]; today: string }) {
+export function OtUsageForm({
+  balances,
+  today,
+  holidays,
+}: {
+  balances: OtRequestBalance[];
+  today: string;
+  holidays: Record<string, string>;
+}) {
   const [state, action] = useActionState<ActionState, FormData>(submitOtUsage, {});
   const v = state.values ?? {};
   const e = state.errors ?? {};
 
+  const [useDate, setUseDate] = useState(today);
   const [wanted, setWanted] = useState("");
   const [alloc, setAlloc] = useState<Record<string, string>>({});
 
@@ -45,12 +56,12 @@ export function OtUsageForm({ balances, today }: { balances: OtRequestBalance[];
   }
 
   return (
-    <form action={action} className="grid gap-6">
+    <ActionForm action={action} className="grid gap-6">
       <ActionMessage state={state} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="วันที่ต้องการใช้" htmlFor="use_date" error={e.use_date} required>
-          <Input id="use_date" name="use_date" type="date" required defaultValue={v.use_date ?? today} />
+          <DatePicker id="use_date" name="use_date" value={useDate} onChange={setUseDate} today={today} holidays={holidays} invalid={Boolean(e.use_date)} />
         </FormField>
         <FormField label="จำนวนชั่วโมงที่ต้องการใช้" htmlFor="wanted" hint={`ใช้ได้สูงสุด ${formatHours(totalAvailable)}`}>
           <div className="flex gap-2">
@@ -143,6 +154,6 @@ export function OtUsageForm({ balances, today }: { balances: OtRequestBalance[];
           ส่งคำขอใช้ {formatHours(total)}
         </SubmitButton>
       </div>
-    </form>
+    </ActionForm>
   );
 }

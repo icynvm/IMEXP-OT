@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { submitOtRequest } from "@/actions/ot-requests";
 import { ActionForm } from "@/components/action-form";
+import { DatePicker } from "@/components/calendar/date-picker";
 import { ActionMessage } from "@/components/action-message";
 import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,12 +25,14 @@ const DEFAULT_TIMES: Record<OtPeriod, { start: string; end: string }> = {
 };
 const PERIOD_ICONS = { before_work: Sunrise, after_work: Moon };
 
-export function OtRequestForm({ today }: { today: string }) {
+export function OtRequestForm({ today, holidays }: { today: string; holidays: Record<string, string> }) {
   const [state, action] = useActionState<ActionState, FormData>(submitOtRequest, {});
   const v = state.values ?? {};
   const e = state.errors ?? {};
 
   // เก็บเวลาเริ่ม/สิ้นสุดแยกตามช่วงเวลา: สลับช่วงไปมาแล้วเวลาที่เลือกไว้ไม่หาย
+  const [requestDate, setRequestDate] = useState(today);
+  const [workDate, setWorkDate] = useState(today);
   const [period, setPeriod] = useState<OtPeriod>("after_work");
   const [times, setTimes] = useState(DEFAULT_TIMES);
   const { start, end } = times[period];
@@ -44,10 +46,10 @@ export function OtRequestForm({ today }: { today: string }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="วันที่ขอ" htmlFor="request_date" error={e.request_date} required>
-          <Input id="request_date" name="request_date" type="date" max={today} required defaultValue={v.request_date ?? today} />
+          <DatePicker id="request_date" name="request_date" value={requestDate} onChange={setRequestDate} today={today} max={today} holidays={holidays} invalid={Boolean(e.request_date)} />
         </FormField>
         <FormField label="วันที่ทำงาน (วันที่ทำ OT)" htmlFor="work_date" error={e.work_date} required>
-          <Input id="work_date" name="work_date" type="date" required defaultValue={v.work_date ?? today} />
+          <DatePicker id="work_date" name="work_date" value={workDate} onChange={setWorkDate} today={today} holidays={holidays} invalid={Boolean(e.work_date)} />
         </FormField>
       </div>
 
