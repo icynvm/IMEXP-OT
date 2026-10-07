@@ -21,8 +21,8 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
 - Balances are computed by views (`ot_request_balances`, `employee_ot_summary`); never store a balance column.
 - Server Actions (`src/actions/`) must call `requireUser()` first, validate with zod (`src/lib/validation.ts`),
   then call the RPC. Mirror DB rules in zod only for friendly Thai messages.
-- `createAdminClient()` (secret key, bypasses RLS) is only for reading email recipients and the signup
-  duplicate-code check. Do not use it for writes.
+- `createAdminClient()` (secret key, bypasses RLS) is only for reading email recipients, the signup
+  duplicate-code check, and resolving employee code → email at login. Do not use it for writes.
 - Emails are sent with `after()` so failures never block the user action.
 - `cacheComponents` is intentionally OFF: every page is per-user dynamic data.
 

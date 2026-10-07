@@ -16,8 +16,19 @@ export function LoginForm({ next }: { next: string }) {
     <form action={action} className="grid gap-4">
       <ActionMessage state={state} />
       <input type="hidden" name="next" value={next} />
-      <FormField label="อีเมล" htmlFor="email" error={state.errors?.email}>
-        <Input id="email" name="email" type="email" autoComplete="email" placeholder="name@company.com" required defaultValue={state.values?.email} />
+      {/* type="text" (ไม่ใช่ email) เพราะกรอกรหัสพนักงานได้ด้วย */}
+      <FormField label="อีเมล หรือ รหัสพนักงาน" htmlFor="identifier" error={state.errors?.identifier}>
+        <Input
+          id="identifier"
+          name="identifier"
+          type="text"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="name@company.com หรือ EMP001"
+          required
+          defaultValue={state.values?.identifier}
+        />
       </FormField>
       <div className="grid gap-2">
         <div className="flex items-center justify-between">

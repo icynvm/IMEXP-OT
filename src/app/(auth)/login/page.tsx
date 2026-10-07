@@ -10,7 +10,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <AuthCard
       title="เข้าสู่ระบบ"
-      description="ใช้อีเมลและรหัสผ่านที่สมัครไว้"
+      description="ใช้อีเมล หรือรหัสพนักงาน กับรหัสผ่านที่สมัครไว้"
       footer={
         <>
           ยังไม่มีบัญชี?&nbsp;

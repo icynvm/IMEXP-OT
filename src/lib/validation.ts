@@ -46,8 +46,16 @@ export const registerSchema = z
     message: "รหัสผ่านทั้งสองช่องไม่ตรงกัน",
   });
 
+// เข้าสู่ระบบได้ 2 แบบ: อีเมล (มี @) หรือ รหัสพนักงาน (ไม่มี @)
 export const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email("รูปแบบอีเมลไม่ถูกต้อง")),
+  identifier: z
+    .string()
+    .trim()
+    .min(1, "กรุณากรอกอีเมลหรือรหัสพนักงาน")
+    .refine(
+      (v) => (v.includes("@") ? z.email().safeParse(v).success : /^[A-Za-z0-9_-]{1,30}$/.test(v)),
+      "กรุณากรอกอีเมล หรือรหัสพนักงาน (A-Z, 0-9, - และ _) ให้ถูกต้อง",
+    ),
   password: z.string().min(1, "กรุณากรอกรหัสผ่าน"),
 });
 

@@ -25,8 +25,24 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return invalid(parsed.error, values);
 
+  const { identifier, password } = parsed.data;
+
+  // กรอกรหัสพนักงาน -> หาอีเมลของรหัสนั้นก่อน (Supabase Auth login ได้ด้วยอีเมลเท่านั้น)
+  // รหัสพนักงานเก็บเป็นตัวพิมพ์ใหญ่เสมอ จึงแปลงก่อนค้น ("emp001" = "EMP001")
+  let email = identifier.toLowerCase();
+  if (!identifier.includes("@")) {
+    const { data } = await createAdminClient()
+      .from("profiles")
+      .select("email")
+      .eq("employee_code", identifier.toUpperCase())
+      .maybeSingle();
+    // ไม่พบรหัส -> ตอบข้อความเดียวกับรหัสผ่านผิด (ไม่บอกว่ารหัสพนักงานนี้มีในระบบหรือไม่)
+    if (!data) return { ok: false, message: toThaiAuthMessage({ code: "invalid_credentials" }), values };
+    email = data.email;
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, message: toThaiAuthMessage(error), values };
 
   redirect(safeRedirectPath(formData.get("next")));

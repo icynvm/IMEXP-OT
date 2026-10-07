@@ -38,7 +38,7 @@ export function toThaiMessage(error: DbError, fallback = "เกิดข้อ�
 export function toThaiAuthMessage(error: { code?: string; message?: string } | null | undefined): string {
   switch (error?.code) {
     case "invalid_credentials":
-      return "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+      return "อีเมล/รหัสพนักงาน หรือรหัสผ่านไม่ถูกต้อง";
     case "email_not_confirmed":
       return "กรุณายืนยันอีเมลก่อน (ตรวจสอบกล่องจดหมายของคุณ)";
     case "user_already_exists":
