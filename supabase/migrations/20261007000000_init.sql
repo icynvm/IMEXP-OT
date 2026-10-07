@@ -2,6 +2,8 @@
 -- ระบบขอ/ใช้ OT  —  โครงสร้างฐานข้อมูลทั้งหมด (รันครั้งเดียวตอนติดตั้ง)
 -- =====================================================================
 -- วิธีใช้: เปิด Supabase Dashboard > SQL Editor > วางไฟล์นี้ทั้งไฟล์ > Run
+--         (ห้ามไฮไลต์ข้อความก่อนกด Run ไม่งั้นจะรันแค่ส่วนที่ไฮไลต์ — ดู docs/SETUP.md)
+-- หมายเหตุ: เนื้อฟังก์ชันครอบด้วย $fn$ ... $fn$ (แทน $$ ... $$ ที่โปรแกรมแสดงผลบางตัวตีความผิด)
 --
 -- หลักการสำคัญ (อ่านก่อนแก้ไข)
 -- 1) ทุกการ "เขียน" ข้อมูล (สร้าง/อนุมัติ/ยกเลิก) ต้องผ่านฟังก์ชันในไฟล์นี้เท่านั้น
@@ -35,9 +37,9 @@ returns date
 language sql
 stable
 set search_path = ''
-as $$
+as $fn$
   select (now() at time zone 'Asia/Bangkok')::date;
-$$;
+$fn$;
 
 
 -- ---------------------------------------------------------------------
@@ -148,12 +150,12 @@ create function public.set_updated_at()
 returns trigger
 language plpgsql
 set search_path = ''
-as $$
+as $fn$
 begin
   new.updated_at := now();
   return new;
 end;
-$$;
+$fn$;
 
 create trigger profiles_set_updated_at before update on public.profiles
   for each row execute function public.set_updated_at();
@@ -173,7 +175,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
 begin
@@ -188,7 +190,7 @@ begin
   );
   return new;
 end;
-$$;
+$fn$;
 
 create trigger on_auth_user_created
   after insert on auth.users
@@ -200,12 +202,12 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 begin
   update public.profiles set email = lower(new.email) where id = new.id;
   return new;
 end;
-$$;
+$fn$;
 
 create trigger on_auth_user_email_changed
   after update of email on auth.users
@@ -224,9 +226,9 @@ language sql
 stable
 security definer
 set search_path = ''
-as $$
+as $fn$
   select role from public.profiles where id = auth.uid() and is_active;
-$$;
+$fn$;
 
 create function public.is_admin()
 returns boolean
@@ -234,9 +236,9 @@ language sql
 stable
 security definer
 set search_path = ''
-as $$
+as $fn$
   select coalesce(public.current_user_role() = 'admin', false);
-$$;
+$fn$;
 
 -- ผู้ใช้ปัจจุบัน "ดูแล" พนักงาน p_employee_id หรือไม่ (admin = ทุกคน, หัวหน้า = ลูกทีม)
 create function public.can_manage(p_employee_id uuid)
@@ -245,7 +247,7 @@ language sql
 stable
 security definer
 set search_path = ''
-as $$
+as $fn$
   select case public.current_user_role()
     when 'admin' then true
     when 'supervisor' then exists (
@@ -254,7 +256,7 @@ as $$
     )
     else false
   end;
-$$;
+$fn$;
 
 -- หัวหน้าของผู้ใช้ปัจจุบัน (ให้พนักงานเห็นชื่อหัวหน้าตัวเองได้)
 create function public.my_supervisor_id()
@@ -263,9 +265,9 @@ language sql
 stable
 security definer
 set search_path = ''
-as $$
+as $fn$
   select supervisor_id from public.profiles where id = auth.uid();
-$$;
+$fn$;
 
 -- ใช้ภายในฟังก์ชันเขียนข้อมูล: ต้อง login และบัญชียังเปิดใช้งาน
 create function public.require_active_user()
@@ -274,14 +276,14 @@ language plpgsql
 stable
 security definer
 set search_path = ''
-as $$
+as $fn$
 begin
   if auth.uid() is null or public.current_user_role() is null then
     raise exception 'กรุณาเข้าสู่ระบบ หรือบัญชีถูกปิดการใช้งาน' using errcode = '42501';
   end if;
   return auth.uid();
 end;
-$$;
+$fn$;
 
 
 -- ---------------------------------------------------------------------
@@ -396,7 +398,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_user uuid := public.require_active_user();
   v_id   uuid;
@@ -426,14 +428,14 @@ begin
 
   return v_id;
 end;
-$$;
+$fn$;
 
 create function public.cancel_ot_request(p_id uuid)
 returns void
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_user uuid := public.require_active_user();
 begin
@@ -445,7 +447,7 @@ begin
     raise exception 'ยกเลิกได้เฉพาะคำขอของตัวเองที่ยังรออนุมัติ' using errcode = '42501';
   end if;
 end;
-$$;
+$fn$;
 
 
 -- ---------------------------------------------------------------------
@@ -462,7 +464,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_user   uuid := public.require_active_user();
   v_id     uuid;
@@ -521,14 +523,14 @@ begin
 
   return v_id;
 end;
-$$;
+$fn$;
 
 create function public.cancel_ot_usage(p_id uuid)
 returns void
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_user uuid := public.require_active_user();
 begin
@@ -540,7 +542,7 @@ begin
     raise exception 'ยกเลิกได้เฉพาะคำขอของตัวเองที่ยังรออนุมัติ' using errcode = '42501';
   end if;
 end;
-$$;
+$fn$;
 
 
 -- ---------------------------------------------------------------------
@@ -551,7 +553,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_user uuid := public.require_active_user();
   v_row  public.ot_requests;
@@ -575,14 +577,14 @@ begin
          review_note = nullif(trim(coalesce(p_note, '')), '')
    where id = p_id;
 end;
-$$;
+$fn$;
 
 create function public.review_ot_usage(p_id uuid, p_approve boolean, p_note text default null)
 returns void
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_user uuid := public.require_active_user();
   v_row  public.ot_usages;
@@ -606,7 +608,7 @@ begin
          review_note = nullif(trim(coalesce(p_note, '')), '')
    where id = p_id;
 end;
-$$;
+$fn$;
 
 
 -- ---------------------------------------------------------------------
@@ -625,7 +627,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $fn$
 declare
   v_user uuid := public.require_active_user();
 begin
@@ -670,7 +672,7 @@ begin
     raise exception 'ไม่พบผู้ใช้' using errcode = '22023';
   end if;
 end;
-$$;
+$fn$;
 
 
 -- ---------------------------------------------------------------------
