@@ -73,6 +73,15 @@
   background: var(--primary-foreground);
 }
 
+/* ตารางเดือน / ตารางปี: แสดงชื่อเดือนย่อภาษาไทย และปี พ.ศ. แทนข้อความของไลบรารี */
+.thai-calendar .lm-calendar-content > div[data-label] {
+  font-size: 0 !important;
+}
+.thai-calendar .lm-calendar-content > div[data-label]::before {
+  content: attr(data-label);
+  font-size: 0.875rem;
+}
+
 /* วันที่เลือกไม่ได้ */
 .thai-calendar .lm-calendar-content > div[data-blocked="true"] {
   opacity: 0.35;

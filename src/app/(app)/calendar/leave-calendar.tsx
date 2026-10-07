@@ -76,7 +76,7 @@ export function LeaveCalendar({
             markers={markers}
             minMonth={minMonth}
             maxMonth={maxMonth}
-            showMonthSelect
+            showTodayButton
             onSelect={setSelected}
             onMonthChange={setMonth}
           />

@@ -2,7 +2,7 @@ import { CalendarCheck, Download, Filter, Hourglass, RotateCcw, TrendingUp, User
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
-import { MonthSelect } from "@/components/month-select";
+import { MonthPicker } from "@/components/calendar/month-picker";
 import { OtRequestTable, OtUsageTable } from "@/components/ot-tables";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
@@ -76,7 +76,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
           <form className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr_auto]">
             <div className="grid gap-2">
               <Label htmlFor="month">เดือน</Label>
-              <MonthSelect id="month" name="month" defaultValue={filters.month} current={todayTH().slice(0, 7)} />
+              <MonthPicker id="month" name="month" defaultValue={filters.month} today={todayTH()} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status">สถานะ</Label>

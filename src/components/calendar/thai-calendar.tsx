@@ -1,10 +1,9 @@
 "use client";
 
 import { Calendar } from "@calendarjs/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { THAI_MONTHS } from "@/lib/constants";
 import { formatMonth, shiftMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -13,29 +12,36 @@ import "./thai-calendar.css";
 /**
  * ปฏิทินภาษาไทย (ใช้ไลบรารี CalendarJS — https://calendarjs.com)
  *
+ * การใช้งาน: กดที่ชื่อเดือนด้านบน -> เลือกเดือน (กดที่ปีเพื่อเลือกปี) -> กลับมาหน้าวันที่
+ * ใช้มุมมอง "เดือน" และ "ปี" ของไลบรารีเอง ไม่มี dropdown
+ *
  * สิ่งที่ห่อเพิ่มจากไลบรารี:
- *  - หัวปฏิทินเป็นเดือนไทย + ปี พ.ศ. พร้อมปุ่มเลื่อนเดือน และช่องเลือกเดือน (ไลบรารีแสดงปี ค.ศ.)
- *  - ชื่อวันในสัปดาห์ภาษาไทย (อา จ อ พ พฤ ศ ส) — ทำใน thai-calendar.css
+ *  - หัวปฏิทินเป็นภาษาไทย + ปี พ.ศ. (ไลบรารีแสดงปี ค.ศ.)
+ *  - ชื่อวัน / ชื่อเดือนย่อ / ปี พ.ศ. ในตาราง — เปลี่ยนข้อความผ่าน CSS (thai-calendar.css)
  *  - ทำเครื่องหมายวันหยุดนักขัตฤกษ์ / วันที่มีคนหยุด (ไลบรารีรุ่นนี้ยังทำเองไม่ได้)
  *  - เลื่อนเดือนในเครื่องทันที ไม่ต้องรอ server
  */
 
 // แปลข้อความของไลบรารีเป็นภาษาไทย (ไลบรารีอ่านจาก document.dictionary)
+const EN_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 if (typeof document !== "undefined") {
   const doc = document as Document & { dictionary?: Record<string, string> };
-  const en = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   doc.dictionary = {
     ...doc.dictionary,
-    ...Object.fromEntries(en.map((m, i) => [m, THAI_MONTHS[i]])),
+    ...Object.fromEntries(EN_MONTHS.map((m, i) => [m, THAI_MONTHS[i]])),
     Sunday: "อาทิตย์", Monday: "จันทร์", Tuesday: "อังคาร", Wednesday: "พุธ",
     Thursday: "พฤหัสบดี", Friday: "ศุกร์", Saturday: "เสาร์",
     Reset: "ล้าง", Done: "ตกลง", Update: "ตกลง",
   };
 }
 
+const THAI_MONTHS_SHORT = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+
 /** เครื่องหมายบนวัน: holiday = ชื่อวันหยุด, count = จำนวนคนที่หยุด */
 export type DayMarker = { holiday?: string; count?: number };
 
+type LibView = "days" | "months" | "years";
+type CalendarRef = React.ComponentRef<typeof Calendar> & { view?: LibView; month?: string; year?: number };
 
 export function ThaiCalendar({
   value,
@@ -45,143 +51,221 @@ export function ThaiCalendar({
   minMonth,
   maxMonth,
   isDisabled,
-  showMonthSelect = false,
+  mode = "date",
   onMonthChange,
+  showTodayButton = false,
   className,
 }: {
-  /** วันที่ที่เลือก "YYYY-MM-DD" */
+  /** วันที่ที่เลือก "YYYY-MM-DD" (โหมดเลือกเดือน: "YYYY-MM") */
   value?: string;
-  onSelect?: (date: string) => void;
+  /** โหมดวันที่: ส่ง "YYYY-MM-DD" / โหมดเดือน: ส่ง "YYYY-MM" */
+  onSelect?: (value: string) => void;
   markers?: Record<string, DayMarker>;
   /** วันนี้ "YYYY-MM-DD" (เวลาไทย) */
   today: string;
-  /** เลื่อนได้ตั้งแต่เดือน "YYYY-MM" ถึงเดือน "YYYY-MM" */
+  /** เลือก/เลื่อนได้ตั้งแต่เดือน "YYYY-MM" ถึงเดือน "YYYY-MM" */
   minMonth?: string;
   maxMonth?: string;
   /** วันที่เลือกไม่ได้ */
   isDisabled?: (date: string) => boolean;
-  /** แสดงช่องเลือกเดือน (สำหรับปฏิทินใหญ่) */
-  showMonthSelect?: boolean;
+  /** "date" = เลือกวันที่, "month" = เลือกเดือน (เช่น ตัวกรองรายเดือน) */
+  mode?: "date" | "month";
   onMonthChange?: (month: string) => void;
+  showTodayButton?: boolean;
   className?: string;
 }) {
-  const ref = useRef<React.ComponentRef<typeof Calendar>>(null);
+  const ref = useRef<CalendarRef | null>(null);
+  // ฟังก์ชันอ่านสถานะ/ทำเครื่องหมายล่าสุด (เรียกตอนไลบรารีพร้อมใช้งานครั้งแรกด้วย)
+  const syncRef = useRef<() => void>(() => {});
+  const setCalendarRef = useCallback((inst: CalendarRef | null) => {
+    ref.current = inst;
+    if (inst) requestAnimationFrame(() => syncRef.current());
+  }, []);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState((value ?? today).slice(0, 7));
-  // เก็บเดือนที่แสดงอยู่ไว้ใน ref ด้วย เพื่อให้ฟังก์ชันที่ไลบรารีเรียกกลับอ่านค่าล่าสุดได้
-  const viewRef = useRef(view);
-  useLayoutEffect(() => {
-    viewRef.current = view;
-  }, [view]);
+  const initialMonth = (value ?? today).slice(0, 7);
 
-  // เลื่อนไลบรารีไปเดือนที่ต้องการ (เรียก next/prev ทีละเดือน)
-  const goTo = useCallback(
-    (target: string) => {
-      const inst = ref.current;
-      if (!inst) return;
-      const diff = monthDiff(viewRef.current, target);
-      for (let i = 0; i < Math.abs(diff); i++) (diff > 0 ? inst.next : inst.prev)?.();
-      viewRef.current = target;
-      setView(target);
-      onMonthChange?.(target);
-    },
-    [onMonthChange],
+  // สถานะที่อ่านจากไลบรารี: มุมมอง (วัน/เดือน/ปี), เดือนที่แสดง, ปีที่แสดง
+  const [libView, setLibView] = useState<LibView>("days");
+  // โหมดเลือกเดือน: true เมื่อไลบรารีแสดงตารางเดือนแล้วจริง (กันการนับว่า "เลือกเดือน" ตอนเพิ่งเปิด)
+  const monthGridShown = useRef(false);
+  const [view, setView] = useState(initialMonth);
+  const [year, setYear] = useState(Number(initialMonth.slice(0, 4)));
+  const state = useRef({ libView, view, year });
+  useLayoutEffect(() => {
+    state.current = { libView, view, year };
+  }, [libView, view, year]);
+
+  const inRange = useCallback(
+    (month: string) => (!minMonth || month >= minMonth) && (!maxMonth || month <= maxMonth),
+    [minMonth, maxMonth],
   );
 
-  // ทำเครื่องหมายบนช่องวัน ทุกครั้งที่ไลบรารีวาดปฏิทินใหม่
+  // อ่านสถานะจากไลบรารี + ทำเครื่องหมาย ทุกครั้งที่ไลบรารีวาดใหม่
   useEffect(() => {
     const root = wrapperRef.current;
     if (!root) return;
     let frame = 0;
-    const decorate = () => {
-      root.querySelectorAll<HTMLElement>(".lm-calendar-content > div").forEach((cell) => {
-        const grey = cell.getAttribute("data-grey") === "true";
-        const date = grey ? null : `${viewRef.current}-${(cell.textContent ?? "").trim().padStart(2, "0")}`;
-        const marker = date ? markers[date] : undefined;
-        toggle(cell, "data-holiday", Boolean(marker?.holiday));
-        toggle(cell, "data-leave", Boolean(marker?.count));
-        toggle(cell, "data-today", date === today);
-        toggle(cell, "data-blocked", Boolean(date && isDisabled?.(date)));
-        cell.title = marker?.holiday ?? "";
+
+    const sync = () => {
+      const inst = ref.current;
+      if (!inst) return;
+      const prev = state.current;
+      const nextView = (inst.view ?? "days") as LibView;
+      const monthIndex = Math.max(0, THAI_MONTHS.indexOf(String(inst.month)), EN_MONTHS.indexOf(String(inst.month)));
+      const nextYear = Number(inst.year) || prev.year;
+      const nextMonth = `${nextYear}-${String(monthIndex + 1).padStart(2, "0")}`;
+
+      // เลือกปีเสร็จ -> ไปหน้าเลือกเดือน (ไลบรารีจะข้ามไปหน้าวันที่เลย)
+      if (prev.libView === "years" && nextView === "days") {
+        inst.setView?.("months");
+        return;
+      }
+      if (mode === "month") {
+        if (nextView === "months") monthGridShown.current = true;
+        if (nextView === "days") {
+          // เลือกเดือนเสร็จ -> ส่งค่ากลับ / ตอนเพิ่งเปิด -> แค่สลับไปตารางเดือน
+          if (monthGridShown.current && prev.libView === "months" && inRange(nextMonth)) onSelect?.(nextMonth);
+          inst.setView?.("months");
+          return;
+        }
+      }
+
+      if (nextView !== prev.libView) setLibView(nextView);
+      if (nextYear !== prev.year) setYear(nextYear);
+      if (nextView === "days" && nextMonth !== prev.view) {
+        setView(nextMonth);
+        onMonthChange?.(nextMonth);
+      }
+      decorate(root, nextView, nextView === "days" ? nextMonth : prev.view, nextYear);
+    };
+
+    const decorate = (el: HTMLElement, v: LibView, month: string, y: number) => {
+      const cells = el.querySelectorAll<HTMLElement>(".lm-calendar-content > div");
+      cells.forEach((cell, i) => {
+        const text = (cell.textContent ?? "").trim();
+        if (v === "days") {
+          const grey = cell.getAttribute("data-grey") === "true";
+          const date = grey ? null : `${month}-${text.padStart(2, "0")}`;
+          const marker = date ? markers[date] : undefined;
+          setAttr(cell, "data-label", null);
+          setAttr(cell, "data-holiday", marker?.holiday ? "true" : null);
+          setAttr(cell, "data-leave", marker?.count ? "true" : null);
+          setAttr(cell, "data-today", date === today ? "true" : null);
+          setAttr(cell, "data-blocked", date && (isDisabled?.(date) || !inRange(date.slice(0, 7))) ? "true" : null);
+          cell.title = marker?.holiday ?? "";
+        } else {
+          // ตารางเดือน: ม.ค. ... ธ.ค. / ตารางปี: ปี พ.ศ.
+          const cellMonth = v === "months" ? `${y}-${String(i + 1).padStart(2, "0")}` : null;
+          const cellYear = v === "years" ? Number(text) : null;
+          setAttr(cell, "data-label", v === "months" ? THAI_MONTHS_SHORT[i] : String((cellYear ?? 0) + 543));
+          setAttr(cell, "data-holiday", null);
+          setAttr(cell, "data-leave", null);
+          setAttr(cell, "data-today", (cellMonth ?? String(cellYear)) === (cellMonth ? today.slice(0, 7) : today.slice(0, 4)) ? "true" : null);
+          const blocked = cellMonth
+            ? !inRange(cellMonth)
+            : (minMonth && `${cellYear}-12` < minMonth) || (maxMonth && `${cellYear}-01` > maxMonth);
+          setAttr(cell, "data-blocked", blocked ? "true" : null);
+          cell.title = "";
+        }
       });
     };
+
+    syncRef.current = sync;
     const observer = new MutationObserver(() => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(decorate);
+      frame = requestAnimationFrame(sync);
     });
-    observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["data-grey"] });
-    decorate();
+    observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["data-grey", "data-view", "data-selected"] });
+    sync();
     return () => {
       observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [markers, today, view, isDisabled]);
+  }, [markers, today, isDisabled, inRange, minMonth, maxMonth, mode, onSelect, onMonthChange]);
 
   const onChange = useCallback(
     (selected: unknown) => {
+      if (mode === "month") return;
       const date = String(selected ?? "").slice(0, 10);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
-      if (isDisabled?.(date)) return;
-      // กดวันของเดือนข้างเคียง -> ปฏิทินเลื่อนไปเดือนนั้น
-      if (date.slice(0, 7) !== viewRef.current) {
-        viewRef.current = date.slice(0, 7);
-        setView(date.slice(0, 7));
-        onMonthChange?.(date.slice(0, 7));
-      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isDisabled?.(date) || !inRange(date.slice(0, 7))) return;
       onSelect?.(date);
     },
-    [isDisabled, onMonthChange, onSelect],
+    [mode, isDisabled, inRange, onSelect],
   );
 
-  const canPrev = !minMonth || view > minMonth;
-  const canNext = !maxMonth || view < maxMonth;
-  const monthOptions = showMonthSelect ? monthsBetween(minMonth ?? shiftMonth(view, -24), maxMonth ?? shiftMonth(view, 24)) : [];
+  // เลื่อนไปเดือนที่ต้องการในหน้าวันที่ (เรียก next/prev ของไลบรารีทีละเดือน)
+  const goToMonth = (target: string) => {
+    const inst = ref.current;
+    if (!inst) return;
+    if (state.current.libView !== "days") inst.setView?.("days");
+    const diff = monthDiff(state.current.view, target);
+    for (let i = 0; i < Math.abs(diff); i++) (diff > 0 ? inst.next : inst.prev)?.();
+  };
+
+  const prev = () => (libView === "days" ? goToMonth(shiftMonth(view, -1)) : ref.current?.prev?.());
+  const next = () => (libView === "days" ? goToMonth(shiftMonth(view, 1)) : ref.current?.next?.());
+  const canPrev = libView !== "days" || !minMonth || view > minMonth;
+  const canNext = libView !== "days" || !maxMonth || view < maxMonth;
+
+  // ข้อความบนหัวปฏิทิน: วัน -> "ตุลาคม 2569" / เดือน -> "2569" / ปี -> "2559 – 2574"
+  const firstYear = year - ((year - 2016) % 16 + 16) % 16;
+  const label =
+    libView === "days" ? formatMonth(view) : libView === "months" ? String(year + 543) : `${firstYear + 543} – ${firstYear + 15 + 543}`;
+  const labelHint = libView === "days" ? "เลือกเดือนและปี" : libView === "months" ? "เลือกปี" : "";
 
   return (
     <div className={cn("thai-calendar grid gap-2", className)}>
       <div className="flex items-center justify-between gap-2">
-        {showMonthSelect ? (
-          <Select value={view} onValueChange={goTo}>
-            <SelectTrigger className="w-44 font-semibold" aria-label="เลือกเดือน">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-72">
-              {monthOptions.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {formatMonth(m)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="px-1 text-sm font-semibold">{formatMonth(view)}</span>
-        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="px-2 text-sm font-semibold"
+          aria-label={labelHint ? `${label} (${labelHint})` : label}
+          data-calendar-label
+          onClick={() => {
+            if (libView === "days") ref.current?.setView?.("months");
+            else if (libView === "months") ref.current?.setView?.("years");
+          }}
+          disabled={libView === "years"}
+        >
+          {label}
+          {libView !== "years" && <ChevronDown className="text-muted-foreground" />}
+        </Button>
         <div className="flex items-center gap-1">
-          <Button type="button" variant="outline" size="icon-sm" disabled={!canPrev} onClick={() => goTo(shiftMonth(view, -1))} aria-label="เดือนก่อน">
+          <Button type="button" variant="outline" size="icon-sm" disabled={!canPrev} onClick={prev} aria-label={libView === "days" ? "เดือนก่อน" : "ก่อนหน้า"}>
             <ChevronLeft />
           </Button>
-          {showMonthSelect && (
-            <Button type="button" variant="outline" size="sm" onClick={() => goTo(today.slice(0, 7))}>
+          {showTodayButton && (
+            <Button type="button" variant="outline" size="sm" onClick={() => goToMonth(today.slice(0, 7))}>
               เดือนนี้
             </Button>
           )}
-          <Button type="button" variant="outline" size="icon-sm" disabled={!canNext} onClick={() => goTo(shiftMonth(view, 1))} aria-label="เดือนถัดไป">
+          <Button type="button" variant="outline" size="icon-sm" disabled={!canNext} onClick={next} aria-label={libView === "days" ? "เดือนถัดไป" : "ถัดไป"}>
             <ChevronRight />
           </Button>
         </div>
       </div>
       <div ref={wrapperRef}>
-        <Calendar ref={ref} type="inline" value={value} footer={false} wheel={false} startingDay={0} onChange={onChange} />
+        <Calendar
+          ref={setCalendarRef}
+          type="inline"
+          value={mode === "month" ? `${value ?? today.slice(0, 7)}-01` : value}
+          footer={false}
+          wheel={false}
+          startingDay={0}
+          onChange={onChange}
+        />
       </div>
     </div>
   );
 }
 
-function toggle(el: HTMLElement, attr: string, on: boolean) {
-  if (on) {
-    if (el.getAttribute(attr) !== "true") el.setAttribute(attr, "true");
-  } else if (el.hasAttribute(attr)) {
-    el.removeAttribute(attr);
+function setAttr(el: HTMLElement, attr: string, value: string | null) {
+  if (value === null) {
+    if (el.hasAttribute(attr)) el.removeAttribute(attr);
+  } else if (el.getAttribute(attr) !== value) {
+    el.setAttribute(attr, value);
   }
 }
 
@@ -189,10 +273,4 @@ function monthDiff(from: string, to: string) {
   const [fy, fm] = from.split("-").map(Number);
   const [ty, tm] = to.split("-").map(Number);
   return (ty - fy) * 12 + (tm - fm);
-}
-
-function monthsBetween(from: string, to: string) {
-  const list: string[] = [];
-  for (let m = from; m <= to; m = shiftMonth(m, 1)) list.push(m);
-  return list;
 }

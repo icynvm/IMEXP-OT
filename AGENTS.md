@@ -32,7 +32,8 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
 - Confirmations use `ConfirmDialog` (Radix AlertDialog). Success/error feedback: the action calls `setFlash()`
   (short-lived cookie, `src/lib/flash.ts`) then `redirect()`s to a clean URL; `FlashDialog` in the layouts shows it.
   Keep URLs clean: never put messages in query strings.
-- All calendars use CalendarJS (`@calendarjs/react`) via `src/components/calendar/` (`ThaiCalendar`, `DatePicker`).
+- All calendars use CalendarJS (`@calendarjs/react`) via `src/components/calendar/` (`ThaiCalendar`, `DatePicker`, `MonthPicker`).
+  Month/year are chosen by clicking the header label (days → months grid → years grid), never with a dropdown/select.
   The wrapper renders its own Thai header (BE year), Thai weekday labels via CSS, and marks holiday/leave days by
   decorating cells (the library's `data` markers don't render in this version). Never use `<input type="date">`.
 - `src/app/(app)/loading.tsx` gives instant skeleton feedback on navigation; nav items show a spinner via `useLinkStatus`.
