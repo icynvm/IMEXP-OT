@@ -191,7 +191,6 @@ function DayCard({
         </CardTitle>
         {holiday && (
           <CardDescription className="flex items-center gap-1.5 text-red-600">
-            <PartyPopper className="size-4" />
             {holiday}
           </CardDescription>
         )}

@@ -28,7 +28,7 @@ export function RegisterForm() {
         <Input id="email" name="email" type="email" autoComplete="email" placeholder="name@company.com" required defaultValue={v.email} />
       </FormField>
       <FormField label="รหัสพนักงาน" htmlFor="employee_code" error={e.employee_code} required>
-        <Input id="employee_code" name="employee_code" required defaultValue={v.employee_code} placeholder="เช่น EMP001" />
+        <Input id="employee_code" name="employee_code" required defaultValue={v.employee_code} placeholder="เช่น 01234"  maxLength={5}/>
       </FormField>
       <FormField
         label="รหัสผ่าน"
