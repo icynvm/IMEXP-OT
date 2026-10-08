@@ -10,7 +10,9 @@ import { UserForm } from "./user-form";
 
 export const metadata: Metadata = { title: "แก้ไขผู้ใช้" };
 
-export default async function EditUserPage({ params }: PageProps<"/admin/users/[id]">) {
+export default async function EditUserPage({
+  params,
+}: PageProps<"/admin/users/[id]">) {
   const admin = await requireUser(["admin"]);
   const { id } = await params;
 
@@ -20,16 +22,25 @@ export default async function EditUserPage({ params }: PageProps<"/admin/users/[
 
   // ตัวเลือกหัวหน้า: ต้องเป็นหัวหน้าทีม / หัวหน้าแผนก / admin ที่ยังใช้งานอยู่ และไม่ใช่ตัวเอง
   const supervisors = profiles.filter(
-    (p) => p.id !== profile.id && p.is_active && APPROVER_ROLES.includes(p.role),
+    (p) =>
+      p.id !== profile.id && p.is_active && APPROVER_ROLES.includes(p.role),
   );
   const departments = await getDepartments();
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title={`แก้ไขผู้ใช้: ${fullName(profile)}`} description={profile.email} />
+      <PageHeader
+        title={`แก้ไขผู้ใช้: ${fullName(profile)}`}
+        description={profile.email}
+      />
       <Card>
         <CardContent>
-          <UserForm profile={profile} supervisors={supervisors} departments={departments} isSelf={profile.id === admin.id} />
+          <UserForm
+            profile={profile}
+            supervisors={supervisors}
+            departments={departments}
+            isSelf={profile.id === admin.id}
+          />
         </CardContent>
       </Card>
     </div>

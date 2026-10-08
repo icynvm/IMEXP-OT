@@ -35,7 +35,10 @@ export function HolidayDialog({
   defaultDate: string;
   today: string;
 }) {
-  const [state, action] = useActionState<ActionState, FormData>(saveHoliday, {});
+  const [state, action] = useActionState<ActionState, FormData>(
+    saveHoliday,
+    {},
+  );
   const [date, setDate] = useState(holiday?.holiday_date ?? defaultDate);
   const e = state.errors ?? {};
 
@@ -45,23 +48,63 @@ export function HolidayDialog({
       <DialogContent>
         <ActionForm action={action} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>{holiday ? "แก้ไขวันหยุด" : "เพิ่มวันหยุด"}</DialogTitle>
-            <DialogDescription>วันหยุดจะแสดงในปฏิทินของทุกคน (สีแดง)</DialogDescription>
+            <DialogTitle>
+              {holiday ? "แก้ไขวันหยุด" : "เพิ่มวันหยุด"}
+            </DialogTitle>
+            <DialogDescription>
+              วันหยุดจะแสดงในปฏิทินของทุกคน (สีแดง)
+            </DialogDescription>
           </DialogHeader>
           <ActionMessage state={state} />
-          <FormField label="วันที่" htmlFor="holiday_date" error={e.holiday_date} required>
+          <FormField
+            label="วันที่"
+            htmlFor="holiday_date"
+            error={e.holiday_date}
+            required
+          >
             {holiday ? (
               // แก้ไข: เปลี่ยนได้เฉพาะชื่อ (ถ้าวันที่ผิด ให้ลบแล้วเพิ่มใหม่)
               <>
-                <input type="hidden" name="holiday_date" value={holiday.holiday_date} />
-                <Input id="holiday_date" value={new Date(`${holiday.holiday_date}T12:00:00Z`).toLocaleDateString("th-TH", { dateStyle: "long", timeZone: "UTC" })} disabled />
+                <input
+                  type="hidden"
+                  name="holiday_date"
+                  value={holiday.holiday_date}
+                />
+                <Input
+                  id="holiday_date"
+                  value={new Date(
+                    `${holiday.holiday_date}T12:00:00Z`,
+                  ).toLocaleDateString("th-TH", {
+                    dateStyle: "long",
+                    timeZone: "UTC",
+                  })}
+                  disabled
+                />
               </>
             ) : (
-              <DatePicker id="holiday_date" name="holiday_date" value={date} onChange={setDate} today={today} />
+              <DatePicker
+                id="holiday_date"
+                name="holiday_date"
+                value={date}
+                onChange={setDate}
+                today={today}
+              />
             )}
           </FormField>
-          <FormField label="ชื่อวันหยุด" htmlFor="holiday_name" error={e.name} required>
-            <Input id="holiday_name" name="name" required maxLength={200} defaultValue={state.values?.name ?? holiday?.name} placeholder="เช่น วันหยุดชดเชยวันสงกรานต์" />
+          <FormField
+            label="ชื่อวันหยุด"
+            htmlFor="holiday_name"
+            error={e.name}
+            required
+          >
+            <Input
+              id="holiday_name"
+              name="name"
+              required
+              maxLength={200}
+              defaultValue={state.values?.name ?? holiday?.name}
+              placeholder="เช่น วันหยุดชดเชยวันสงกรานต์"
+            />
           </FormField>
           <DialogFooter>
             <DialogClose asChild>

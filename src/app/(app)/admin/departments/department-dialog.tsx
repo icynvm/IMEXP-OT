@@ -19,7 +19,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ActionState, Department } from "@/lib/types";
 
 const NO_HEAD = "none";
@@ -36,7 +42,10 @@ export function DepartmentDialog({
   /** ผู้ใช้บทบาท "หัวหน้าแผนก" ที่เลือกได้ */
   headOptions: { id: string; label: string }[];
 }) {
-  const [state, action] = useActionState<ActionState, FormData>(saveDepartment, {});
+  const [state, action] = useActionState<ActionState, FormData>(
+    saveDepartment,
+    {},
+  );
   const [headId, setHeadId] = useState(department?.head_id ?? NO_HEAD);
   const e = state.errors ?? {};
 
@@ -46,12 +55,21 @@ export function DepartmentDialog({
       <DialogContent>
         <ActionForm action={action} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>{department ? "แก้ไขแผนก" : "สร้างแผนกใหม่"}</DialogTitle>
-            <DialogDescription>หัวหน้าแผนกจะเห็นและอนุมัติคำขอของทุกคนในแผนก</DialogDescription>
+            <DialogTitle>
+              {department ? "แก้ไขแผนก" : "สร้างแผนกใหม่"}
+            </DialogTitle>
+            <DialogDescription>
+              หัวหน้าแผนกจะเห็นและอนุมัติคำขอของทุกคนในแผนก
+            </DialogDescription>
           </DialogHeader>
           <ActionMessage state={state} />
           <input type="hidden" name="id" value={department?.id ?? ""} />
-          <FormField label="ชื่อแผนก" htmlFor={`dept-name-${department?.id ?? "new"}`} error={e.name} required>
+          <FormField
+            label="ชื่อแผนก"
+            htmlFor={`dept-name-${department?.id ?? "new"}`}
+            error={e.name}
+            required
+          >
             <Input
               id={`dept-name-${department?.id ?? "new"}`}
               name="name"
@@ -69,7 +87,10 @@ export function DepartmentDialog({
           >
             <input type="hidden" name="head_id" value={headId} />
             <Select value={headId} onValueChange={setHeadId}>
-              <SelectTrigger id={`dept-head-${department?.id ?? "new"}`} className="w-full">
+              <SelectTrigger
+                id={`dept-head-${department?.id ?? "new"}`}
+                className="w-full"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

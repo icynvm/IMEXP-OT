@@ -146,7 +146,7 @@ export function AppShell({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="bg-muted/40 min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+    <div className="bg-muted/40 min-h-screen lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
       {/* จอใหญ่: แถบเมนูซ้าย */}
       <aside className="bg-background sticky top-0 hidden h-screen flex-col border-r lg:flex">
         <div className="flex h-16 items-center px-6">
@@ -193,7 +193,7 @@ export function AppShell({
           </Sheet>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl min-w-0 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

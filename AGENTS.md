@@ -38,6 +38,9 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
   Month/year are chosen by clicking the header label (days → months grid → years grid), never with a dropdown/select.
   The wrapper renders its own Thai header (BE year), Thai weekday labels via CSS, and marks holiday/leave days by
   decorating cells (the library's `data` markers don't render in this version). Never use `<input type="date">`.
+- Mobile (390px) must not scroll sideways. Wide data tables render `MobileList`/`MobileItem` cards below `md`
+  and the `<Table>` inside `hidden md:block`; small admin tables instead hide secondary columns
+  (`hidden md:table-cell`), repeat that info under the first cell, and use icon-only buttons (`sr-only sm:not-sr-only` label).
 - `src/app/(app)/loading.tsx` gives instant skeleton feedback on navigation; nav items show a spinner via `useLinkStatus`.
 - Forms that contain Radix Select/RadioGroup/Checkbox must use `ActionForm` + controlled state + hidden inputs:
   React resets `<form action>` after submit and Radix's form-reset listeners would revert the user's choices.

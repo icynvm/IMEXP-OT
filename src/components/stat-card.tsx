@@ -25,10 +25,10 @@ export function StatCard({
 }) {
   return (
     <Card className="gap-0 py-0">
-      <CardContent className="flex items-start justify-between gap-3 p-5">
+      <CardContent className="flex items-start justify-between gap-3 p-4 sm:p-5">
         <div className="min-w-0 space-y-1">
           <p className="text-muted-foreground text-sm">{label}</p>
-          <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+          <p className="text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
           {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
         </div>
         <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", TONES[tone])}>

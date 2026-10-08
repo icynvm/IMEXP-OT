@@ -19,16 +19,27 @@ export async function sendEmail(input: { to: string[]; subject: string; html: st
   }
 
   client ??= new Resend(env.resendApiKey);
-  try {
-    const { error } = await client.emails.send({
-      from: env.emailFrom,
-      to,
-      subject: input.subject,
-      html: input.html,
-      text: input.text,
-    });
-    if (error) console.error("[email] ส่งไม่สำเร็จ:", error);
-  } catch (err) {
-    console.error("[email] ส่งไม่สำเร็จ:", err);
+  // Resend จำกัดจำนวนอีเมลต่อวินาที — ถ้ามีคนกดอนุมัติ/ยื่นพร้อมกันหลายรายการแล้วโดนจำกัด
+  // ให้รอแล้วลองใหม่ (1, 2, 4 วินาที) แทนการทิ้งอีเมลไปเลย
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const { error } = await client.emails.send({
+        from: env.emailFrom,
+        to,
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+      });
+      if (!error) return;
+      if (error.name === "rate_limit_exceeded" && attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+        continue;
+      }
+      console.error("[email] ส่งไม่สำเร็จ:", error);
+      return;
+    } catch (err) {
+      console.error("[email] ส่งไม่สำเร็จ:", err);
+      return;
+    }
   }
 }

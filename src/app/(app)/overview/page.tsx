@@ -1,17 +1,46 @@
-import { CalendarCheck, Download, Filter, Hourglass, RotateCcw, TrendingUp, Users } from "lucide-react";
+import {
+  CalendarCheck,
+  Download,
+  Filter,
+  Hourglass,
+  RotateCcw,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
+import { MobileField, MobileItem, MobileList } from "@/components/mobile-list";
 import { MonthPicker } from "@/components/calendar/month-picker";
 import { OtRequestTable, OtUsageTable } from "@/components/ot-tables";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
 import { APPROVER_ROLES, ROLE_LABELS, STATUS_LABELS } from "@/lib/constants";
 import { getDepartments, getHistory, getManagedSummaries } from "@/lib/data";
@@ -20,7 +49,8 @@ import { formatHours, formatMonth, fullName, todayTH } from "@/lib/format";
 
 export const metadata: Metadata = { title: "ภาพรวม" };
 
-const sum = (rows: { hours: number }[]) => rows.reduce((s, r) => s + Number(r.hours), 0);
+const sum = (rows: { hours: number }[]) =>
+  rows.reduce((s, r) => s + Number(r.hours), 0);
 
 function CsvButton({ href }: { href: string }) {
   return (
@@ -33,29 +63,45 @@ function CsvButton({ href }: { href: string }) {
   );
 }
 
-export default async function OverviewPage({ searchParams }: PageProps<"/overview">) {
+export default async function OverviewPage({
+  searchParams,
+}: PageProps<"/overview">) {
   const user = await requireUser(APPROVER_ROLES);
   const filters = parseOverviewFilters(await searchParams);
 
   const [summaries, history, departments] = await Promise.all([
     getManagedSummaries(user),
-    getHistory(user, { from: filters.from, to: filters.to, employeeId: filters.employeeId }),
+    getHistory(user, {
+      from: filters.from,
+      to: filters.to,
+      employeeId: filters.employeeId,
+    }),
     getDepartments(),
   ]);
   // ชื่อแผนก / ชื่อหัวหน้าทีม สำหรับแสดงในตารางยอดสะสม
   const deptName = new Map(departments.map((d) => [d.id, d.name]));
-  const personName = new Map(summaries.map((s) => [s.employee_id, fullName(s)]));
+  const personName = new Map(
+    summaries.map((s) => [s.employee_id, fullName(s)]),
+  );
   personName.set(user.id, "คุณ");
 
   // ตัวเลขสรุปของเดือนที่เลือก
-  const approvedRequests = history.requests.filter((r) => r.status === "approved");
+  const approvedRequests = history.requests.filter(
+    (r) => r.status === "approved",
+  );
   const approvedUsages = history.usages.filter((u) => u.status === "approved");
-  const pendingRequests = history.requests.filter((r) => r.status === "pending");
+  const pendingRequests = history.requests.filter(
+    (r) => r.status === "pending",
+  );
   const pendingUsages = history.usages.filter((u) => u.status === "pending");
 
   // ตารางรายการ: กรองตามสถานะที่เลือก
-  const requests = filters.status ? history.requests.filter((r) => r.status === filters.status) : history.requests;
-  const usages = filters.status ? history.usages.filter((u) => u.status === filters.status) : history.usages;
+  const requests = filters.status
+    ? history.requests.filter((r) => r.status === filters.status)
+    : history.requests;
+  const usages = filters.status
+    ? history.usages.filter((u) => u.status === filters.status)
+    : history.usages;
 
   const exportQuery = new URLSearchParams({
     month: filters.month,
@@ -66,7 +112,13 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
   return (
     <>
       <PageHeader
-        title={user.role === "admin" ? "ภาพรวมทั้งหมด" : user.role === "department_head" ? "ภาพรวมแผนก" : "ภาพรวมทีม"}
+        title={
+          user.role === "admin"
+            ? "ภาพรวมทั้งหมด"
+            : user.role === "department_head"
+              ? "ภาพรวมแผนก"
+              : "ภาพรวมทีม"
+        }
         description={`ข้อมูลประจำเดือน ${formatMonth(filters.month)}`}
       />
 
@@ -76,7 +128,12 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
           <form className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr_auto]">
             <div className="grid gap-2">
               <Label htmlFor="month">เดือน</Label>
-              <MonthPicker id="month" name="month" defaultValue={filters.month} today={todayTH()} />
+              <MonthPicker
+                id="month"
+                name="month"
+                defaultValue={filters.month}
+                today={todayTH()}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status">สถานะ</Label>
@@ -96,7 +153,10 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
             </div>
             <div className="grid gap-2">
               <Label htmlFor="employee">พนักงาน</Label>
-              <Select name="employee" defaultValue={filters.employeeId ?? "all"}>
+              <Select
+                name="employee"
+                defaultValue={filters.employeeId ?? "all"}
+              >
                 <SelectTrigger id="employee" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -116,7 +176,11 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
                 แสดงผล
               </Button>
               <Button variant="outline" size="icon" asChild>
-                <Link href="/overview" aria-label="ล้างตัวกรอง" title="ล้างตัวกรอง">
+                <Link
+                  href="/overview"
+                  aria-label="ล้างตัวกรอง"
+                  title="ล้างตัวกรอง"
+                >
                   <RotateCcw />
                 </Link>
               </Button>
@@ -125,72 +189,165 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
         </CardContent>
       </Card>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="OT ที่อนุมัติ (เดือนนี้)" value={formatHours(sum(approvedRequests))} icon={TrendingUp} tone="blue" hint={`${approvedRequests.length} รายการ`} />
-        <StatCard label="ใช้ OT ที่อนุมัติ (เดือนนี้)" value={formatHours(sum(approvedUsages))} icon={CalendarCheck} hint={`${approvedUsages.length} รายการ`} />
-        <StatCard label="คำขอ OT รออนุมัติ" value={`${pendingRequests.length} รายการ`} icon={Hourglass} tone="amber" hint={formatHours(sum(pendingRequests))} />
-        <StatCard label="คำขอใช้ OT รออนุมัติ" value={`${pendingUsages.length} รายการ`} icon={Hourglass} tone="amber" hint={formatHours(sum(pendingUsages))} />
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatCard
+          label="OT ที่อนุมัติ (เดือนนี้)"
+          value={formatHours(sum(approvedRequests))}
+          icon={TrendingUp}
+          tone="blue"
+          hint={`${approvedRequests.length} รายการ`}
+        />
+        <StatCard
+          label="ใช้ OT ที่อนุมัติ (เดือนนี้)"
+          value={formatHours(sum(approvedUsages))}
+          icon={CalendarCheck}
+          hint={`${approvedUsages.length} รายการ`}
+        />
+        <StatCard
+          label="คำขอ OT รออนุมัติ"
+          value={`${pendingRequests.length} รายการ`}
+          icon={Hourglass}
+          tone="amber"
+          hint={formatHours(sum(pendingRequests))}
+        />
+        <StatCard
+          label="คำขอใช้ OT รออนุมัติ"
+          value={`${pendingUsages.length} รายการ`}
+          icon={Hourglass}
+          tone="amber"
+          hint={formatHours(sum(pendingUsages))}
+        />
       </div>
 
-      <div className="grid gap-6">
+      {/* grid-cols-1: ให้การ์ดกว้างเท่าจอเสมอ (ไม่ถูกตารางกว้าง ๆ ดันจนล้นจอมือถือ) */}
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>ยอดชั่วโมงสะสมรายบุคคล</CardTitle>
-            <CardDescription>ตั้งแต่เริ่มใช้ระบบ · กดชื่อเพื่อดูรายการของคนนั้น</CardDescription>
+            <CardDescription>
+              ตั้งแต่เริ่มใช้ระบบ · กดชื่อเพื่อดูรายการของคนนั้น
+            </CardDescription>
             <CardAction>
               <CsvButton href="/overview/export?type=balances" />
             </CardAction>
           </CardHeader>
           <CardContent>
             {summaries.length === 0 ? (
-              <EmptyState icon={Users}>ยังไม่มีพนักงานในความดูแล (ให้ admin กำหนดหัวหน้าในหน้าจัดการผู้ใช้)</EmptyState>
+              <EmptyState icon={Users}>
+                ยังไม่มีพนักงานในความดูแล (ให้ admin
+                กำหนดหัวหน้าในหน้าจัดการผู้ใช้)
+              </EmptyState>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>พนักงาน</TableHead>
-                    <TableHead>บทบาท</TableHead>
-                    <TableHead>แผนก / หัวหน้าทีม</TableHead>
-                    <TableHead className="text-right">ได้รับอนุมัติ</TableHead>
-                    <TableHead className="text-right">ใช้แล้ว</TableHead>
-                    <TableHead className="text-right">จองไว้</TableHead>
-                    <TableHead className="text-right">คงเหลือ</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                <MobileList>
                   {summaries.map((s) => (
-                    <TableRow key={s.employee_id} className={s.is_active ? "" : "opacity-50"}>
-                      <TableCell>
+                    <MobileItem
+                      key={s.employee_id}
+                      className={s.is_active ? "" : "opacity-50"}
+                      title={
                         <Link
                           href={`/overview?${new URLSearchParams({ month: filters.month, employee: s.employee_id })}`}
-                          className="font-medium hover:underline"
+                          className="hover:underline"
                         >
                           {s.first_name} {s.last_name}
                         </Link>
-                        <div className="text-muted-foreground text-xs">
-                          {s.employee_code}
-                          {!s.is_active && " · ปิดใช้งาน"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{ROLE_LABELS[s.role]}</Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        <div>{(s.department_id && deptName.get(s.department_id)) || "-"}</div>
-                        <div className="text-muted-foreground">
-                          {s.supervisor_id ? `หัวหน้า: ${personName.get(s.supervisor_id) ?? "-"}` : "ไม่มีหัวหน้า"}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{formatHours(s.earned_hours)}</TableCell>
-                      <TableCell className="text-muted-foreground text-right tabular-nums">{formatHours(s.used_hours)}</TableCell>
-                      <TableCell className="text-right text-amber-600 tabular-nums">{formatHours(s.reserved_hours)}</TableCell>
-                      <TableCell className="text-right font-semibold text-emerald-600 tabular-nums">
-                        {formatHours(s.remaining_hours)}
-                      </TableCell>
-                    </TableRow>
+                      }
+                      subtitle={`${s.employee_code} · ${ROLE_LABELS[s.role]}${s.is_active ? "" : " · ปิดใช้งาน"}`}
+                      badge={
+                        <span className="font-semibold text-emerald-600 tabular-nums">
+                          เหลือ {formatHours(s.remaining_hours)}
+                        </span>
+                      }
+                    >
+                      <MobileField label="แผนก">
+                        {(s.department_id && deptName.get(s.department_id)) ||
+                          "-"}
+                      </MobileField>
+                      <MobileField label="หัวหน้า">
+                        {s.supervisor_id
+                          ? (personName.get(s.supervisor_id) ?? "-")
+                          : "ไม่มีหัวหน้า"}
+                      </MobileField>
+                      <MobileField label="ได้รับ / ใช้ / จอง">
+                        <span className="tabular-nums">
+                          {formatHours(s.earned_hours)} /{" "}
+                          {formatHours(s.used_hours)} /{" "}
+                          <span className="text-amber-600">
+                            {formatHours(s.reserved_hours)}
+                          </span>
+                        </span>
+                      </MobileField>
+                    </MobileItem>
                   ))}
-                </TableBody>
-              </Table>
+                </MobileList>
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>พนักงาน</TableHead>
+                        <TableHead>บทบาท</TableHead>
+                        <TableHead>แผนก / หัวหน้าทีม</TableHead>
+                        <TableHead className="text-right">
+                          ได้รับอนุมัติ
+                        </TableHead>
+                        <TableHead className="text-right">ใช้แล้ว</TableHead>
+                        <TableHead className="text-right">จองไว้</TableHead>
+                        <TableHead className="text-right">คงเหลือ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {summaries.map((s) => (
+                        <TableRow
+                          key={s.employee_id}
+                          className={s.is_active ? "" : "opacity-50"}
+                        >
+                          <TableCell>
+                            <Link
+                              href={`/overview?${new URLSearchParams({ month: filters.month, employee: s.employee_id })}`}
+                              className="font-medium hover:underline"
+                            >
+                              {s.first_name} {s.last_name}
+                            </Link>
+                            <div className="text-muted-foreground text-xs">
+                              {s.employee_code}
+                              {!s.is_active && " · ปิดใช้งาน"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {ROLE_LABELS[s.role]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            <div>
+                              {(s.department_id &&
+                                deptName.get(s.department_id)) ||
+                                "-"}
+                            </div>
+                            <div className="text-muted-foreground">
+                              {s.supervisor_id
+                                ? `หัวหน้า: ${personName.get(s.supervisor_id) ?? "-"}`
+                                : "ไม่มีหัวหน้า"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatHours(s.earned_hours)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-right tabular-nums">
+                            {formatHours(s.used_hours)}
+                          </TableCell>
+                          <TableCell className="text-right text-amber-600 tabular-nums">
+                            {formatHours(s.reserved_hours)}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-emerald-600 tabular-nums">
+                            {formatHours(s.remaining_hours)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -201,7 +358,9 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
               คำขอทำ OT <Badge variant="secondary">{requests.length}</Badge>
             </CardTitle>
             <CardAction>
-              <CsvButton href={`/overview/export?type=requests&${exportQuery}`} />
+              <CsvButton
+                href={`/overview/export?type=requests&${exportQuery}`}
+              />
             </CardAction>
           </CardHeader>
           <CardContent>
@@ -212,7 +371,8 @@ export default async function OverviewPage({ searchParams }: PageProps<"/overvie
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              การใช้ชั่วโมง OT <Badge variant="secondary">{usages.length}</Badge>
+              การใช้ชั่วโมง OT{" "}
+              <Badge variant="secondary">{usages.length}</Badge>
             </CardTitle>
             <CardAction>
               <CsvButton href={`/overview/export?type=usages&${exportQuery}`} />
