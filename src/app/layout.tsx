@@ -8,6 +8,9 @@ const thaiFont = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: '/favicon.webp',
+  },
   title: { default: "ระบบขอ OT", template: "%s | ระบบขอ OT" },
   description: "ระบบขอทำ OT และใช้ชั่วโมง OT สะสม",
   robots: { index: false, follow: false },

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarOff } from "lucide-react";
+import { CalendarOff, PartyPopper } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ThaiCalendar, type DayMarker } from "@/components/calendar/thai-calendar";
 import { EmptyState } from "@/components/empty-state";
@@ -66,9 +66,8 @@ export function LeaveCalendar({
     [markers, month],
   );
 
-  // ปฏิทินเป็นส่วนหลัก (กว้างตามจอ) / รายละเอียดอยู่ด้านขวา (จอใหญ่) หรือด้านล่าง (จอเล็ก)
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,400px)_1fr]">
       <Card>
         <CardContent>
           <ThaiCalendar
@@ -78,11 +77,10 @@ export function LeaveCalendar({
             minMonth={minMonth}
             maxMonth={maxMonth}
             showTodayButton
-            className="thai-calendar-lg"
             onSelect={setSelected}
             onMonthChange={setMonth}
           />
-          <div className="text-muted-foreground mt-4 flex flex-wrap gap-4 text-sm">
+          <div className="text-muted-foreground mt-3 flex flex-wrap gap-4 text-xs">
             <span className="flex items-center gap-1.5">
               <span className="size-3 rounded bg-red-50 ring-1 ring-red-200" /> วันหยุดนักขัตฤกษ์
             </span>

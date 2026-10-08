@@ -16,6 +16,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -62,8 +63,14 @@ function navItems(user: Profile, pendingCount: number): NavItem[] {
 function Brand() {
   return (
     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-      <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
-        <Clock3 className="size-4" />
+      <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg overflow-hidden">
+        <Image 
+          src="/images/logo/logo-impact-organizer.webp" 
+          alt="Impact Organizer Logo" // 2. Required for accessibility
+          width={32}                  // 3. Match your size-8 (32px) container
+          height={32} 
+          className="object-contain"
+        />
       </span>
       ระบบขอ OT
     </Link>
