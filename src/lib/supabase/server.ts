@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
+import { fetchWithTimeout } from "./fetch-timeout";
 
 /**
  * Supabase client สำหรับฝั่ง server (หน้าเว็บ / Server Actions)
@@ -11,6 +12,7 @@ export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient(env.supabaseUrl, env.supabasePublishableKey, {
+    global: { fetch: fetchWithTimeout },
     cookies: {
       getAll() {
         return cookieStore.getAll();

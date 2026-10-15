@@ -16,12 +16,18 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   const userId = data?.claims?.sub;
   if (!userId) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("id, employee_code, first_name, last_name, email, role, supervisor_id, department_id, is_active, avatar_path")
     .eq("id", userId)
     .maybeSingle<Profile>();
 
+  // ฐานข้อมูลติดต่อไม่ได้ != ยังไม่ login: ถ้าคืน null จะถูกส่งไปหน้า login แล้วเด้งกลับวนไม่จบ
+  // จึงโยน error ให้หน้า "โหลดข้อมูลไม่สำเร็จ" (มีปุ่มลองใหม่) แสดงแทน
+  if (error) {
+    console.error("[auth] โหลดโปรไฟล์ไม่สำเร็จ:", error);
+    throw new Error("โหลดข้อมูลผู้ใช้ไม่สำเร็จ");
+  }
   return profile ?? null;
 });
 

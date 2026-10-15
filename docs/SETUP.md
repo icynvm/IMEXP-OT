@@ -26,6 +26,8 @@
      (วันหยุดนักขัตฤกษ์ ปี 2569–2570)
      แล้วต่อด้วย [`20261015000000_profile_avatar_reviewer.sql`](../supabase/migrations/20261015000000_profile_avatar_reviewer.sql)
      (หน้าโปรไฟล์ + ที่เก็บรูป Storage bucket `avatars` + ชื่อผู้อนุมัติ — ไฟล์นี้สร้าง bucket ให้เอง ไม่ต้องไปสร้างในเมนู Storage)
+     แล้วต่อด้วย [`20261020000000_push_subscriptions.sql`](../supabase/migrations/20261020000000_push_subscriptions.sql)
+     (การแจ้งเตือนแบบ Push ที่มุมจอ / มือถือ)
    - ถ้าเคยรันไฟล์แรกไปแล้ว ให้รันเฉพาะไฟล์ที่ยังไม่เคยรัน
 5. ไปที่ **Project Settings → API Keys** จดค่าเหล่านี้ไว้ใช้ในขั้นที่ 3:
    - **Project URL** (เช่น `https://abcd1234.supabase.co`)
@@ -82,12 +84,25 @@
    | `RESEND_API_KEY` | API key ของ Resend |
    | `EMAIL_FROM` | `ระบบ OT <ot@your-company.com>` |
    | `NEXT_PUBLIC_SITE_URL` | URL ของเว็บ เช่น `https://imexp-ot.vercel.app` (ถ้ายังไม่รู้ ใส่ทีหลังได้ แล้วกด Redeploy) |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | (ไม่บังคับ) กุญแจ Push สาธารณะ — ดู "การแจ้งเตือนแบบ Push" ด้านล่าง |
+   | `VAPID_PRIVATE_KEY` | (ไม่บังคับ) กุญแจ Push ลับ **ห้ามเปิดเผย** |
+   | `VAPID_SUBJECT` | (ไม่บังคับ) `mailto:อีเมลผู้ดูแลระบบ` เช่น `mailto:it@your-company.com` |
 
 4. กด **Deploy** → รอจนเสร็จ จะได้ URL ของเว็บ
 5. ถ้า URL จริงไม่ตรงกับ `NEXT_PUBLIC_SITE_URL` ให้แก้ค่าแล้ว **Deployments → ⋯ → Redeploy**
 
 > ⚠️ **ทุกครั้งที่เพิ่ม/แก้ Environment Variables ต้อง Redeploy** ค่าที่ขึ้นต้น `NEXT_PUBLIC_` ถูกฝังลงในเว็บตอน build
 > ถ้า deploy ไปก่อนแล้วค่อยมาใส่ค่า เว็บจะยังไม่เห็นค่าใหม่จนกว่าจะ Redeploy
+
+### การแจ้งเตือนแบบ Push (เด้งที่มุมจอคอม / มือถือ แม้ปิดเว็บ) — ไม่บังคับ
+
+1. ในเครื่องที่มี Node.js รัน `npx web-push generate-vapid-keys` จะได้ **Public Key** และ **Private Key**
+2. ใส่ใน Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = Public Key, `VAPID_PRIVATE_KEY` = Private Key,
+   `VAPID_SUBJECT` = `mailto:อีเมลผู้ดูแล` → **Redeploy**
+3. ผู้ใช้กด **เปิดการแจ้งเตือน** ที่กระดิ่ง (หัวหน้า/admin) หรือหน้า **โปรไฟล์** (ทุกคน) — เปิดแยกทีละอุปกรณ์
+   - iPhone/iPad: ต้อง **เพิ่มไปยังหน้าจอโฮม** (Safari → ปุ่มแชร์) แล้วเปิดจากไอคอนก่อน (iOS 16.4 ขึ้นไป)
+- ถ้าไม่ตั้งค่า: กระดิ่งในเว็บยังใช้ได้ และยังเด้งแจ้งเตือนได้ **ขณะเปิดเว็บค้างไว้** (เช็กทุก 1 นาที) แค่ไม่มีตอนปิดเว็บ
+- **ห้ามเปลี่ยนกุญแจ** หลังเริ่มใช้งาน (ถ้าเปลี่ยน ทุกคนต้องกดเปิดการแจ้งเตือนใหม่)
 
 ### ถ้าเปิดเว็บแล้วขึ้น error
 

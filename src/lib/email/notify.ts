@@ -2,13 +2,14 @@ import "server-only";
 import { env } from "@/lib/env";
 import { PERIOD_LABELS, STATUS_LABELS } from "@/lib/constants";
 import { formatDate, formatHours, formatTime, fullName } from "@/lib/format";
+import { sendPush } from "@/lib/push/send";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ApprovalStatus, OtPeriod, Role } from "@/lib/types";
 import { sendEmail } from "./send";
 import { renderEmail } from "./template";
 
 /**
- * การแจ้งเตือนทางอีเมล
+ * การแจ้งเตือนทางอีเมล + Push (เด้งที่มุมจอ / มือถือ สำหรับคนที่กดเปิดแจ้งเตือนไว้)
  *   - พนักงานยื่นคำขอ   -> ส่งหาหัวหน้าผู้อนุมัติ → ถ้าไม่มี ส่งหาหัวหน้าแผนก → ถ้าไม่มี ส่งหา admin ทุกคน
  *   - หัวหน้ายื่นเอง   -> อนุมัติอัตโนมัติ ไม่ต้องส่งอีเมล
  *   - หัวหน้าพิจารณาแล้ว -> ส่งหาพนักงานเจ้าของคำขอ
@@ -40,13 +41,15 @@ async function getPerson(id: string): Promise<Person | null> {
   return data ?? null;
 }
 
-/** อีเมลผู้อนุมัติของพนักงานคนนี้ */
-async function getApproverEmails(employee: Person): Promise<string[]> {
+type Recipient = { id: string; email: string };
+
+/** ผู้อนุมัติของพนักงานคนนี้ (ใช้ทั้งส่งอีเมลและ Push) */
+async function getApprovers(employee: Person): Promise<Recipient[]> {
   // 1) หัวหน้าผู้อนุมัติ
   if (employee.supervisor_id) {
     const supervisor = await getPerson(employee.supervisor_id);
     if (supervisor?.is_active && APPROVER_ROLE_NAMES.includes(supervisor.role)) {
-      return [supervisor.email];
+      return [supervisor];
     }
   }
   // 2) หัวหน้าแผนก
@@ -57,16 +60,16 @@ async function getApproverEmails(employee: Person): Promise<string[]> {
       .eq("id", employee.department_id)
       .maybeSingle<{ head_id: string | null }>();
     const head = dept?.head_id && dept.head_id !== employee.id ? await getPerson(dept.head_id) : null;
-    if (head?.is_active) return [head.email];
+    if (head?.is_active) return [head];
   }
   // 3) admin ทุกคน
   const { data: admins } = await createAdminClient()
     .from("profiles")
-    .select("email")
+    .select("id, email")
     .eq("role", "admin")
     .eq("is_active", true)
     .neq("id", employee.id);
-  return (admins ?? []).map((a) => a.email as string);
+  return (admins ?? []) as Recipient[];
 }
 
 function employeeLabel(p: Person) {
@@ -122,12 +125,24 @@ export async function notifyOtRequestSubmitted(requestId: string) {
     buttonText: "ไปหน้าอนุมัติ",
     buttonUrl: `${env.siteUrl}/approvals`,
   });
-  await sendEmail({
-    to: await getApproverEmails(employee),
-    subject: `[OT] คำขอทำ OT ใหม่: ${fullName(employee)} วันที่ ${formatDate(request.work_date)}`,
-    html,
-    text,
-  });
+  const approvers = await getApprovers(employee);
+  await Promise.all([
+    sendEmail({
+      to: approvers.map((a) => a.email),
+      subject: `[OT] คำขอทำ OT ใหม่: ${fullName(employee)} วันที่ ${formatDate(request.work_date)}`,
+      html,
+      text,
+    }),
+    sendPush(
+      approvers.map((a) => a.id),
+      {
+        title: "คำขอทำ OT ใหม่รออนุมัติ",
+        body: `${fullName(employee)} · ${formatDate(request.work_date)} · ${formatHours(request.hours)}`,
+        url: "/approvals",
+        tag: `ot-request-${requestId}`,
+      },
+    ),
+  ]);
 }
 
 export async function notifyOtRequestReviewed(requestId: string) {
@@ -152,12 +167,20 @@ export async function notifyOtRequestReviewed(requestId: string) {
     buttonText: "ดูคำขอ OT ของฉัน",
     buttonUrl: `${env.siteUrl}/ot-requests`,
   });
-  await sendEmail({
-    to: [employee.email],
-    subject: `[OT] คำขอทำ OT วันที่ ${formatDate(request.work_date)}: ${status}`,
-    html,
-    text,
-  });
+  await Promise.all([
+    sendEmail({
+      to: [employee.email],
+      subject: `[OT] คำขอทำ OT วันที่ ${formatDate(request.work_date)}: ${status}`,
+      html,
+      text,
+    }),
+    sendPush([employee.id], {
+      title: `คำขอทำ OT: ${status}`,
+      body: `วันที่ ${formatDate(request.work_date)} · ${formatHours(request.hours)}${reviewer ? ` · โดย ${fullName(reviewer)}` : ""}`,
+      url: "/ot-requests",
+      tag: `ot-request-${requestId}-reviewed`,
+    }),
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -210,12 +233,24 @@ export async function notifyOtUsageSubmitted(usageId: string) {
     buttonText: "ไปหน้าอนุมัติ",
     buttonUrl: `${env.siteUrl}/approvals`,
   });
-  await sendEmail({
-    to: await getApproverEmails(employee),
-    subject: `[OT] คำขอใช้ OT ใหม่: ${fullName(employee)} วันที่ ${formatDate(usage.use_date)}`,
-    html,
-    text,
-  });
+  const approvers = await getApprovers(employee);
+  await Promise.all([
+    sendEmail({
+      to: approvers.map((a) => a.email),
+      subject: `[OT] คำขอใช้ OT ใหม่: ${fullName(employee)} วันที่ ${formatDate(usage.use_date)}`,
+      html,
+      text,
+    }),
+    sendPush(
+      approvers.map((a) => a.id),
+      {
+        title: "คำขอใช้ชั่วโมง OT ใหม่รออนุมัติ",
+        body: `${fullName(employee)} · ใช้ ${formatDate(usage.use_date)} · ${formatHours(usage.hours)}`,
+        url: "/approvals",
+        tag: `ot-usage-${usageId}`,
+      },
+    ),
+  ]);
 }
 
 export async function notifyOtUsageReviewed(usageId: string) {
@@ -243,10 +278,18 @@ export async function notifyOtUsageReviewed(usageId: string) {
     buttonText: "ดูการใช้ OT ของฉัน",
     buttonUrl: `${env.siteUrl}/ot-usages`,
   });
-  await sendEmail({
-    to: [employee.email],
-    subject: `[OT] คำขอใช้ OT วันที่ ${formatDate(usage.use_date)}: ${status}`,
-    html,
-    text,
-  });
+  await Promise.all([
+    sendEmail({
+      to: [employee.email],
+      subject: `[OT] คำขอใช้ OT วันที่ ${formatDate(usage.use_date)}: ${status}`,
+      html,
+      text,
+    }),
+    sendPush([employee.id], {
+      title: `คำขอใช้ OT: ${status}`,
+      body: `วันที่ ${formatDate(usage.use_date)} · ${formatHours(usage.hours)}${reviewer ? ` · โดย ${fullName(reviewer)}` : ""}`,
+      url: "/ot-usages",
+      tag: `ot-usage-${usageId}-reviewed`,
+    }),
+  ]);
 }

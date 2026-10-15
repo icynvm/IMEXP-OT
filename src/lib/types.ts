@@ -130,3 +130,17 @@ export type ActionState = {
   errors?: Record<string, string[] | undefined>;
   values?: Record<string, string>;
 };
+
+/** 1 รายการในกระดิ่งแจ้งเตือน (คำขอที่รอผู้ใช้คนนี้อนุมัติ) */
+export type ApprovalNotification = {
+  id: string;
+  kind: "request" | "usage";
+  employeeName: string;
+  employeeCode: string;
+  /** วันที่ทำ OT (คำขอทำ OT) / วันที่ต้องการใช้ (คำขอใช้ OT) */
+  date: string;
+  hours: number;
+  createdAt: string;
+};
+
+export type ApprovalNotifications = { total: number; items: ApprovalNotification[] };

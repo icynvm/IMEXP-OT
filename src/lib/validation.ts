@@ -163,6 +163,14 @@ export const profileSchema = z.object({
 export const AVATAR_MAX_BYTES = 1024 * 1024;
 export const AVATAR_TYPES: Record<string, string> = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
 
+// ---------------------------------------------------------------------------
+// การแจ้งเตือนแบบ Push (ข้อมูลจาก PushSubscription ของเบราว์เซอร์)
+// ---------------------------------------------------------------------------
+export const pushSubscriptionSchema = z.object({
+  endpoint: z.url().startsWith("https://").max(1000),
+  keys: z.object({ p256dh: z.string().min(1).max(200), auth: z.string().min(1).max(100) }),
+});
+
 export const holidaySchema = z.object({
   holiday_date: dateField("วันที่"),
   name: z.string().trim().min(1, "กรุณากรอกชื่อวันหยุด").max(200, "ชื่อวันหยุดยาวเกินไป"),

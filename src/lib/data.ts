@@ -1,6 +1,9 @@
 import "server-only";
+import { fullName } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type {
+  ApprovalNotification,
+  ApprovalNotifications,
   ApprovalStatus,
   Department,
   EmployeeOtSummary,
@@ -9,6 +12,7 @@ import type {
   OtRequest,
   OtRequestBalance,
   OtUsage,
+  PersonRef,
   Profile,
 } from "@/lib/types";
 
@@ -124,6 +128,48 @@ export async function getPendingApprovals(userId: string) {
     requests: check(requests, "คำขอ OT รออนุมัติ") as unknown as OtRequest[],
     usages: check(usages, "คำขอใช้ OT รออนุมัติ") as unknown as OtUsage[],
   };
+}
+
+/**
+ * กระดิ่งแจ้งเตือน: คำขอที่รอผู้ใช้คนนี้อนุมัติ (ล่าสุด 20 รายการ + จำนวนทั้งหมด)
+ * RLS จำกัดให้เห็นเฉพาะคนที่ตัวเองดูแลอยู่แล้ว / ไม่รวมของตัวเอง
+ */
+export async function getApprovalNotifications(userId: string): Promise<ApprovalNotifications> {
+  const supabase = await createClient();
+  const person = "employee:profiles!%s_employee_id_fkey(first_name, last_name, employee_code)";
+  const [requests, usages] = await Promise.all([
+    supabase
+      .from("ot_requests")
+      .select(`id, work_date, hours, created_at, ${person.replace("%s", "ot_requests")}`, { count: "exact" })
+      .eq("status", "pending")
+      .neq("employee_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("ot_usages")
+      .select(`id, use_date, hours, created_at, ${person.replace("%s", "ot_usages")}`, { count: "exact" })
+      .eq("status", "pending")
+      .neq("employee_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+  type Row = { id: string; hours: number; created_at: string; work_date?: string; use_date?: string; employee: PersonRef | null };
+  const toItem = (kind: ApprovalNotification["kind"]) => (r: Row): ApprovalNotification => ({
+    id: r.id,
+    kind,
+    employeeName: fullName(r.employee),
+    employeeCode: r.employee?.employee_code ?? "",
+    date: (r.work_date ?? r.use_date)!,
+    hours: Number(r.hours),
+    createdAt: r.created_at,
+  });
+  const items = [
+    ...(check(requests, "การแจ้งเตือน") as unknown as Row[]).map(toItem("request")),
+    ...(check(usages, "การแจ้งเตือน") as unknown as Row[]).map(toItem("usage")),
+  ]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 20);
+  return { total: (requests.count ?? 0) + (usages.count ?? 0), items };
 }
 
 /** แผนกที่ผู้ใช้คนนี้เป็นหัวหน้าแผนก */

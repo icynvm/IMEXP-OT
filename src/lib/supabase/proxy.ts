@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { configErrorPage, findConfigProblems } from "@/lib/config-check";
+import { fetchWithTimeout } from "./fetch-timeout";
 
 /** หน้าที่เข้าได้โดยไม่ต้อง login */
 const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/auth"];
@@ -35,6 +36,7 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      global: { fetch: fetchWithTimeout },
       cookies: {
         getAll() {
           return request.cookies.getAll();

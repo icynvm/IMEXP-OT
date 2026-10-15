@@ -81,4 +81,5 @@ npx supabase start   # จะแสดง URL และ key ให้นำไ�
 ```bash
 npm run check   # ตรวจรูปแบบโค้ด (lint) + ตรวจชนิดข้อมูล (typecheck)
 npm run build   # ลอง build แบบเดียวกับบน Vercel
+npm run test:e2e  # ทดสอบทั้งระบบแบบผู้ใช้จริง (ต้องรัน Supabase ในเครื่อง — ดู e2e/README.md)
 ```

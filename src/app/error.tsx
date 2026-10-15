@@ -1,20 +1,12 @@
 "use client";
 
-import { RotateCcw, TriangleAlert } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ErrorView } from "@/components/error-view";
 
-// แสดงเมื่อเกิดข้อผิดพลาดที่ไม่คาดคิดในหน้าใดก็ตาม
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+// แสดงเมื่อเกิดข้อผิดพลาดที่ไม่คาดคิด (หน้า login / สมัคร ฯลฯ — หน้าหลัง login ใช้ (app)/error.tsx ที่ยังมีเมนู)
+export default function RootError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-      <TriangleAlert className="text-destructive size-10" />
-      <h1 className="text-2xl font-semibold">เกิดข้อผิดพลาด</h1>
-      <p className="text-muted-foreground text-sm">{error.message || "กรุณาลองใหม่อีกครั้ง"}</p>
-      {error.digest && <p className="text-muted-foreground text-xs">รหัสอ้างอิง: {error.digest}</p>}
-      <Button onClick={reset}>
-        <RotateCcw />
-        ลองใหม่
-      </Button>
+    <main className="flex min-h-screen items-center justify-center">
+      <ErrorView error={error} retry={retry} />
     </main>
   );
 }

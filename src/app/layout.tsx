@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 
@@ -9,11 +9,18 @@ const thaiFont = Noto_Sans_Thai({
 
 export const metadata: Metadata = {
   icons: {
-    icon: '/favicon.webp',
+    icon: "/favicon.webp",
+    apple: "/icons/apple-touch-icon.png",
   },
+  // iPhone/iPad: เปิดจากไอคอนบนหน้าจอหลักแบบเต็มจอเหมือนแอป (จำเป็นสำหรับการแจ้งเตือนบน iOS)
+  appleWebApp: { capable: true, title: "ระบบ OT", statusBarStyle: "default" },
   title: { default: "ระบบขอ OT", template: "%s | ระบบขอ OT" },
   description: "ระบบขอทำ OT และใช้ชั่วโมง OT สะสม",
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -23,8 +23,12 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
 - Balances are computed by views (`ot_request_balances`, `employee_ot_summary`); never store a balance column.
 - Server Actions (`src/actions/`) must call `requireUser()` first, validate with zod (`src/lib/validation.ts`),
   then call the RPC. Mirror DB rules in zod only for friendly Thai messages.
-- `createAdminClient()` (secret key, bypasses RLS) is only for reading email recipients, the signup
-  duplicate-code check, and resolving employee code → email at login. Do not use it for writes.
+- `createAdminClient()` (secret key, bypasses RLS) is only for reading email/push recipients, the signup
+  duplicate-code check, and resolving employee code → email at login. Do not use it for writes
+  (only exception: `remove_expired_push_subscription()` for devices the push service reports gone, 404/410).
+- Notifications: `src/lib/email/notify.ts` sends email + Web Push together (`sendPush`, VAPID env optional).
+  Approver bell = `getApprovalNotifications()` + `/api/notifications` polled every 60s; push/local notification `tag`s
+  must match (`ot-request-<id>`, `ot-usage-<id>`) so the same event never pops twice. PWA: `src/app/manifest.ts`, `public/sw.js`.
 - Emails are sent with `after()` so failures never block the user action.
 - `cacheComponents` is intentionally OFF: every page is per-user dynamic data.
 
@@ -52,3 +56,5 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
 ## Before pushing
 - `npm run check` (eslint + `next typegen && tsc`) and `npm run build` must pass.
 - Optional full stack locally: `npx supabase start` (Docker) then `npx supabase db reset` to re-apply migrations.
+- E2E (local Supabase only, see `e2e/README.md`): `npm run test:e2e` (fresh DB) then `test:notifications`, `test:security`, `test:mobile`,
+  `test:perf`, `test:outage`. Add a check to `e2e/` when you add a flow or a permission rule.

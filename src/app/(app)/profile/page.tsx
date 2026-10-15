@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { PushToggle } from "@/components/notifications/push-toggle";
 import { PageHeader } from "@/components/page-header";
+import { InstallApp } from "@/components/pwa/install-app";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/constants";
@@ -25,6 +27,25 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent>
           <AvatarUploader firstName={user.first_name} avatarPath={user.avatar_path} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>แอปและการแจ้งเตือน</CardTitle>
+          <CardDescription>
+            ติดตั้งเป็นแอปบนมือถือ/คอม และรับการแจ้งเตือนที่มุมจอเมื่อมีคำขอใหม่หรือคำขอของคุณได้รับการพิจารณา (เปิดแยกทีละอุปกรณ์)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-5">
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">ติดตั้งแอป</p>
+            <InstallApp />
+          </div>
+          <div className="grid gap-2 border-t pt-5">
+            <p className="text-sm font-medium">การแจ้งเตือนบนอุปกรณ์นี้</p>
+            <PushToggle />
+          </div>
         </CardContent>
       </Card>
 

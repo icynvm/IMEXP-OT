@@ -19,19 +19,33 @@ import {
 import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useApprovalNotifications } from "@/components/notifications/use-approval-notifications";
 import { UserAvatar } from "@/components/user-avatar";
+import { registerServiceWorker } from "@/lib/push-client";
 import { APPROVER_ROLES, ROLE_LABELS } from "@/lib/constants";
-import type { Profile } from "@/lib/types";
+import type { ApprovalNotifications, Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const isApprover = (user: Profile) => APPROVER_ROLES.includes(user.role);
 
-type NavItem = { href: string; label: string; icon: LucideIcon; badge?: number };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  badge?: number;
+};
 
 /** เมนูตามบทบาท (แก้ชื่อเมนู / ไอคอน ได้ที่นี่ — ไอคอนดูได้ที่ https://lucide.dev/icons) */
 function navItems(user: Profile, pendingCount: number): NavItem[] {
@@ -44,9 +58,18 @@ function navItems(user: Profile, pendingCount: number): NavItem[] {
   ];
   if (isApprover(user)) {
     const overviewLabel =
-      user.role === "admin" ? "ภาพรวมทั้งหมด" : user.role === "department_head" ? "ภาพรวมแผนก" : "ภาพรวมทีม";
+      user.role === "admin"
+        ? "ภาพรวมทั้งหมด"
+        : user.role === "department_head"
+          ? "ภาพรวมแผนก"
+          : "ภาพรวมทีม";
     items.push(
-      { href: "/approvals", label: "รออนุมัติ", icon: ClipboardCheck, badge: pendingCount },
+      {
+        href: "/approvals",
+        label: "รออนุมัติ",
+        icon: ClipboardCheck,
+        badge: pendingCount,
+      },
       { href: "/overview", label: overviewLabel, icon: History },
     );
   }
@@ -54,7 +77,11 @@ function navItems(user: Profile, pendingCount: number): NavItem[] {
     items.push(
       { href: "/admin/users", label: "จัดการผู้ใช้", icon: Users },
       { href: "/admin/departments", label: "แผนก", icon: Building2 },
-      { href: "/admin/holidays", label: "วันหยุดนักขัตฤกษ์", icon: PartyPopper },
+      {
+        href: "/admin/holidays",
+        label: "วันหยุดนักขัตฤกษ์",
+        icon: PartyPopper,
+      },
     );
   }
   return items;
@@ -64,11 +91,11 @@ function Brand() {
   return (
     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
       <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg overflow-hidden">
-        <Image 
-          src="/images/logo/logo-impact-organizer.webp" 
+        <Image
+          src="/images/logo/logo-impact-organizer.webp"
           alt="Impact Organizer Logo" // 2. Required for accessibility
-          width={32}                  // 3. Match your size-8 (32px) container
-          height={32} 
+          width={32} // 3. Match your size-8 (32px) container
+          height={32}
           className="object-contain"
         />
       </span>
@@ -80,10 +107,20 @@ function Brand() {
 /** ไอคอนเมนู: ระหว่างกำลังเปิดหน้า จะเปลี่ยนเป็นวงหมุนให้รู้ว่ากดแล้ว */
 function NavIcon({ icon: Icon }: { icon: LucideIcon }) {
   const { pending } = useLinkStatus();
-  return pending ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />;
+  return pending ? (
+    <Loader2 className="size-4 animate-spin" />
+  ) : (
+    <Icon className="size-4" />
+  );
 }
 
-function Nav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
+function Nav({
+  items,
+  onNavigate,
+}: {
+  items: NavItem[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   return (
     <nav className="grid gap-1">
@@ -115,11 +152,21 @@ function Nav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void 
   );
 }
 
-function UserBox({ user, onNavigate }: { user: Profile; onNavigate?: () => void }) {
+function UserBox({
+  user,
+  onNavigate,
+}: {
+  user: Profile;
+  onNavigate?: () => void;
+}) {
   return (
     <div className="flex items-center gap-3">
       {/* กดที่รูป/ชื่อ -> หน้าโปรไฟล์ */}
-      <Link href="/profile" onClick={onNavigate} className="hover:bg-muted/60 -m-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition-colors">
+      <Link
+        href="/profile"
+        onClick={onNavigate}
+        className="hover:bg-muted/60 -m-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition-colors"
+      >
         <UserAvatar firstName={user.first_name} avatarPath={user.avatar_path} />
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-medium">
@@ -131,7 +178,13 @@ function UserBox({ user, onNavigate }: { user: Profile; onNavigate?: () => void 
         </div>
       </Link>
       <form action={logout}>
-        <Button type="submit" variant="ghost" size="icon-sm" aria-label="ออกจากระบบ" title="ออกจากระบบ">
+        <Button
+          type="submit"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="ออกจากระบบ"
+          title="ออกจากระบบ"
+        >
           <LogOut />
         </Button>
       </form>
@@ -142,22 +195,31 @@ function UserBox({ user, onNavigate }: { user: Profile; onNavigate?: () => void 
 /** โครงหน้าหลังเข้าสู่ระบบ: แถบเมนูซ้าย (จอใหญ่) / เมนูแบบเลื่อนออก (มือถือ) */
 export function AppShell({
   user,
-  pendingCount,
+  notifications: initialNotifications,
   children,
 }: {
   user: Profile;
-  pendingCount: number;
+  /** null = พนักงาน (ไม่มีกระดิ่ง) */
+  notifications: ApprovalNotifications | null;
   children: React.ReactNode;
 }) {
+  const notifications = useApprovalNotifications(initialNotifications);
+  const pendingCount = notifications?.total ?? 0;
   const items = navItems(user, pendingCount);
   const [open, setOpen] = useState(false);
+
+  // PWA: ลงทะเบียน Service Worker (ติดตั้งเป็นแอป + รับการแจ้งเตือน)
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   return (
     <div className="bg-muted/40 min-h-screen lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
       {/* จอใหญ่: แถบเมนูซ้าย */}
       <aside className="bg-background sticky top-0 hidden h-screen flex-col border-r lg:flex">
-        <div className="flex h-16 items-center px-6">
+        <div className="flex h-16 items-center justify-between gap-2 pr-3 pl-6">
           <Brand />
+          {notifications && <NotificationBell data={notifications} />}
         </div>
         <Separator />
         <div className="flex-1 overflow-y-auto p-4">
@@ -173,34 +235,46 @@ export function AppShell({
         {/* มือถือ: แถบด้านบน + ปุ่มเปิดเมนู */}
         <header className="bg-background sticky top-0 z-30 flex h-14 items-center justify-between border-b px-4 lg:hidden">
           <Brand />
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="เปิดเมนู" className="relative">
-                <Menu />
-                {pendingCount > 0 && <span className="bg-destructive absolute top-1.5 right-1.5 size-2 rounded-full" />}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 gap-0 p-0">
-              <SheetHeader className="h-14 justify-center px-6">
-                <SheetTitle asChild>
-                  <div>
-                    <Brand />
-                  </div>
-                </SheetTitle>
-              </SheetHeader>
-              <Separator />
-              <div className="flex-1 p-4">
-                <Nav items={items} onNavigate={() => setOpen(false)} />
-              </div>
-              <Separator />
-              <div className="p-4">
-                <UserBox user={user} onNavigate={() => setOpen(false)} />
-              </div>
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-1">
+            {notifications && <NotificationBell data={notifications} />}
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="เปิดเมนู"
+                  className="relative"
+                >
+                  <Menu />
+                  {pendingCount > 0 && (
+                    <span className="bg-destructive absolute top-1.5 right-1.5 size-2 rounded-full" />
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 gap-0 p-0">
+                <SheetHeader className="h-14 justify-center px-6">
+                  <SheetTitle asChild>
+                    <div>
+                      <Brand />
+                    </div>
+                  </SheetTitle>
+                </SheetHeader>
+                <Separator />
+                <div className="flex-1 p-4">
+                  <Nav items={items} onNavigate={() => setOpen(false)} />
+                </div>
+                <Separator />
+                <div className="p-4">
+                  <UserBox user={user} onNavigate={() => setOpen(false)} />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl min-w-0 p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl min-w-0 p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
       </div>
     </div>
   );

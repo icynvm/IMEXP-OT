@@ -246,7 +246,17 @@ export function ThaiCalendar({
           </Button>
         </div>
       </div>
-      <div ref={wrapperRef}>
+      <div
+        ref={wrapperRef}
+        onClick={(event) => {
+          // ไลบรารีแจ้ง onChange เฉพาะเมื่อ "เปลี่ยน" วันที่ -> กดวันที่เลือกไว้แล้วซ้ำจะเงียบ
+          // (เช่น ค่าเริ่มต้นเป็นวันนี้ แล้วผู้ใช้กดวันนี้) ทำให้ช่องเลือกวันที่ไม่ปิด จึงแจ้งเองตรงนี้
+          const cell = (event.target as HTMLElement).closest<HTMLElement>(".lm-calendar-content > div");
+          if (mode === "date" && libView === "days" && value && cell?.dataset.selected === "true" && cell.dataset.grey !== "true") {
+            onSelect?.(value);
+          }
+        }}
+      >
         <Calendar
           ref={setCalendarRef}
           type="inline"
