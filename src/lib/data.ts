@@ -172,6 +172,13 @@ export async function getApprovalNotifications(userId: string): Promise<Approval
   return { total: (requests.count ?? 0) + (usages.count ?? 0), items };
 }
 
+/** admin: โดเมนอีเมลที่สมัครได้ (ว่าง = ทุกโดเมน) */
+export async function getSignupDomains(): Promise<string[]> {
+  const supabase = await createClient();
+  const result = await supabase.rpc("admin_get_signup_domains");
+  return (check(result, "การตั้งค่าการสมัคร") as string[] | null) ?? [];
+}
+
 /** แผนกที่ผู้ใช้คนนี้เป็นหัวหน้าแผนก */
 async function getHeadedDepartmentIds(userId: string): Promise<string[]> {
   const supabase = await createClient();

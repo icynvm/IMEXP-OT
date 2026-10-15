@@ -25,7 +25,12 @@ Read `docs/STRUCTURE.md` (file map) and `docs/RULES.md` (business rules) before 
   then call the RPC. Mirror DB rules in zod only for friendly Thai messages.
 - `createAdminClient()` (secret key, bypasses RLS) is only for reading email/push recipients, the signup
   duplicate-code check, and resolving employee code → email at login. Do not use it for writes
-  (only exception: `remove_expired_push_subscription()` for devices the push service reports gone, 404/410).
+  (exceptions: `remove_expired_push_subscription()` for devices the push service reports gone, 404/410, and the
+  `rate_limit_*` functions in `src/lib/rate-limit.ts` — both are granted to `service_role` only).
+- Security: login/signup/forgot-password go through `src/lib/rate-limit.ts` (DB table `auth_rate_limits`, keyed by
+  Vercel's `x-real-ip`). Signup email domains are enforced in `handle_new_user()` (`signup_settings`).
+- CSP with a per-request nonce is set in `src/proxy.ts` (`src/lib/csp.ts`); the root layout reads `headers()` so
+  every page is dynamic and gets the nonce. Never add inline `<script>`; a new external origin must be added to `csp.ts`.
 - Notifications: `src/lib/email/notify.ts` sends email + Web Push together (`sendPush`, VAPID env optional).
   Approver bell = `getApprovalNotifications()` + `/api/notifications` polled every 60s; push/local notification `tag`s
   must match (`ot-request-<id>`, `ot-usage-<id>`) so the same event never pops twice. PWA: `src/app/manifest.ts`, `public/sw.js`.

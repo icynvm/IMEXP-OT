@@ -102,3 +102,22 @@ export async function deleteHoliday(_prev: ActionState, formData: FormData): Pro
   await setFlash("ลบวันหยุดเรียบร้อย");
   redirect(`/admin/holidays?year=${date.slice(0, 4)}`);
 }
+
+/**
+ * admin ตั้งโดเมนอีเมลที่สมัครได้ — ฟอร์มส่งช่อง domains (คั่นด้วยเว้นวรรค, จุลภาค หรือขึ้นบรรทัดใหม่)
+ * ว่าง = สมัครได้ทุกโดเมน
+ */
+export async function saveSignupDomains(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireUser(["admin"]);
+  const raw = String(formData.get("domains") ?? "");
+  const domains = raw.split(/[\s,]+/).map((d) => d.trim()).filter(Boolean);
+  if (domains.length > 20) return { ok: false, message: "ใส่ได้ไม่เกิน 20 โดเมน", values: { domains: raw } };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_set_signup_domains", { p_domains: domains });
+  if (error) return { ok: false, message: toThaiMessage(error), values: { domains: raw } };
+
+  revalidatePath("/admin/users");
+  await setFlash(domains.length ? "บันทึกโดเมนที่สมัครได้เรียบร้อย" : "เปิดให้สมัครได้ทุกโดเมนแล้ว");
+  redirect("/admin/users");
+}

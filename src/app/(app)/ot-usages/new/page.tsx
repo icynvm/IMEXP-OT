@@ -16,7 +16,9 @@ export default async function NewOtUsagePage() {
   const user = await requireUser();
   const today = todayTH();
   // ใช้ได้เฉพาะ OT ที่อนุมัติแล้ว และทำไปแล้ว (วันที่ทำ OT ไม่เกินวันนี้)
-  const balances = (await getMyAvailableBalances(user.id)).filter((b) => b.work_date <= today);
+  // โหลดพร้อมกัน (ไม่ต้องรอทีละอย่าง)
+  const [allBalances, holidays] = await Promise.all([getMyAvailableBalances(user.id), getHolidays()]);
+  const balances = allBalances.filter((b) => b.work_date <= today);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -41,7 +43,7 @@ export default async function NewOtUsagePage() {
               ยังไม่มีชั่วโมง OT ที่ใช้ได้ (ต้องเป็น OT ที่อนุมัติแล้วและทำไปแล้ว)
             </EmptyState>
           ) : (
-            <OtUsageForm balances={balances} today={today} holidays={holidayMap(await getHolidays())} />
+            <OtUsageForm balances={balances} today={today} holidays={holidayMap(holidays)} />
           )}
         </CardContent>
       </Card>

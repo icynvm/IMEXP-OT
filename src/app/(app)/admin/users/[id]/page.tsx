@@ -16,7 +16,8 @@ export default async function EditUserPage({
   const admin = await requireUser(["admin"]);
   const { id } = await params;
 
-  const profiles = await getAllProfiles();
+  // โหลดพร้อมกัน (ไม่ต้องรอทีละอย่าง)
+  const [profiles, departments] = await Promise.all([getAllProfiles(), getDepartments()]);
   const profile = profiles.find((p) => p.id === id);
   if (!profile) notFound();
 
@@ -25,7 +26,6 @@ export default async function EditUserPage({
     (p) =>
       p.id !== profile.id && p.is_active && APPROVER_ROLES.includes(p.role),
   );
-  const departments = await getDepartments();
 
   return (
     <div className="mx-auto max-w-2xl">

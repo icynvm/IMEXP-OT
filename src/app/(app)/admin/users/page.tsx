@@ -25,8 +25,9 @@ import {
 } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/constants";
-import { getAllProfiles, getDepartments } from "@/lib/data";
+import { getAllProfiles, getDepartments, getSignupDomains } from "@/lib/data";
 import { fullName } from "@/lib/format";
+import { SignupDomainsForm } from "./signup-domains-form";
 
 export const metadata: Metadata = { title: "จัดการผู้ใช้" };
 
@@ -38,9 +39,10 @@ export default async function AdminUsersPage({
   const search = typeof q === "string" ? q.trim().toLowerCase() : "";
   const deptFilter = typeof dept === "string" && dept ? dept : "all"; // "all" | "none" | id แผนก
 
-  const [profiles, departments] = await Promise.all([
+  const [profiles, departments, signupDomains] = await Promise.all([
     getAllProfiles(),
     getDepartments(),
+    getSignupDomains(),
   ]);
   const byId = new Map(profiles.map((p) => [p.id, p]));
   const deptName = new Map(departments.map((d) => [d.id, d.name]));
@@ -210,6 +212,13 @@ export default async function AdminUsersPage({
               </TableBody>
             </Table>
           )}
+        </CardContent>
+      </Card>
+
+      {/* ความปลอดภัย: จำกัดว่าใครสมัครได้ (ฐานข้อมูลตรวจซ้ำ แม้สมัครผ่าน API ตรง) */}
+      <Card className="mt-6">
+        <CardContent>
+          <SignupDomainsForm domains={signupDomains} />
         </CardContent>
       </Card>
     </>

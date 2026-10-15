@@ -182,21 +182,48 @@ log("---- 10. เดารหัสผ่านซ้ำ ๆ (brute force) ----"
 const attackCtx = await browser.newContext();
 const ap = await attackCtx.newPage();
 let blockedAt = 0;
-for (let i = 1; i <= 15; i++) {
+for (let i = 1; i <= 12; i++) {
   await ap.goto(`${BASE}/login`);
   await ap.fill("#identifier", B.email);
   await ap.fill("#password", `wrong-${i}`);
   await ap.click("main button[type=submit]");
   const alert = ap.locator("main [data-slot=alert]").first();
   await alert.waitFor();
-  const text = await alert.innerText();
-  if (!text.includes("ไม่ถูกต้อง")) {
+  if ((await alert.innerText()).includes("ผิดหลายครั้งเกินไป")) {
     blockedAt = i;
     break;
   }
 }
-log(blockedAt ? `INFO brute force throttled after ${blockedAt} attempts` : "WARN 15 wrong passwords in a row were NOT throttled (แนะนำเปิด CAPTCHA — ดู e2e/README.md)");
+assert(blockedAt > 0 && blockedAt <= 9, `brute force blocked after ${blockedAt - 1} wrong passwords`);
+// ถูกบล็อกแล้ว แม้รหัสผ่านถูกก็ต้องรอ (กันเดาต่อจนถูก)
+await ap.fill("#password", PASSWORD);
+await ap.click("main button[type=submit]");
+await ap.locator("main [data-slot=alert]").first().waitFor();
+assert(new URL(ap.url()).pathname === "/login", "while blocked, even the correct password is refused");
+// บัญชีเดียวกันจากเครื่อง/IP อื่นยังเข้าได้ (คนแกล้งกรอกผิดไม่ทำให้เจ้าของบัญชีถูกล็อก)
+assert(!(await anon().auth.signInWithPassword({ email: B.email, password: PASSWORD })).error, "the account owner is not locked out on other connections");
 await attackCtx.close();
+
+log("---- 11. CSP / การสมัคร ----");
+const loginRes = await fetch(`${BASE}/login`);
+const csp = loginRes.headers.get("content-security-policy") ?? "";
+const scriptSrc = csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
+assert(/'nonce-[^']+'/.test(scriptSrc) && !scriptSrc.includes("unsafe-inline") && csp.includes("frame-ancestors 'none'") && csp.includes("object-src 'none'"), "CSP: scripts need a per-request nonce, no inline scripts, no framing");
+const loginHtml = await loginRes.text();
+const nonce = /'nonce-([^']+)'/.exec(scriptSrc)[1];
+assert(loginHtml.includes(`nonce="${nonce}"`), "page scripts carry the CSP nonce");
+assert(Boolean((await anon().auth.signUp({ email: `sec-weak-${RUN}@test.local`.toLowerCase(), password: "12345678", options: { data: { first_name: "a", last_name: "b", employee_code: `W${RUN}` } } })).error), "weak password (digits only) rejected even via API");
+sql("update signup_settings set allowed_email_domains = '{company.test}'");
+try {
+  const outsider = await anon().auth.signUp({ email: `outsider-${RUN}@gmail.com`.toLowerCase(), password: PASSWORD, options: { data: { first_name: "a", last_name: "b", employee_code: `O${RUN}` } } });
+  assert(Boolean(outsider.error), "signup from a non-company email domain is rejected (even via API)");
+  const insider = await anon().auth.signUp({ email: `insider-${RUN}@company.test`.toLowerCase(), password: PASSWORD, options: { data: { first_name: "a", last_name: "b", employee_code: `I${RUN}` } } });
+  assert(!insider.error, "signup with an allowed company domain works");
+  assert(Boolean((await A.client.rpc("admin_set_signup_domains", { p_domains: [] })).error), "employee cannot change allowed signup domains");
+  assert(denied(await A.client.from("auth_rate_limits").select("*")) && Boolean((await A.client.rpc("rate_limit_record", { p_keys: ["x"] })).error), "users cannot read or write rate-limit counters");
+} finally {
+  sql("update signup_settings set allowed_email_domains = '{}'");
+}
 
 failOnPageErrors();
 console.log("\nALL SECURITY CHECKS PASSED");

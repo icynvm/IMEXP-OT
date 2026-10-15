@@ -27,6 +27,13 @@ if (!/127\.0\.0\.1|localhost/.test(DB_URL)) {
 /** รันคำสั่ง SQL ในฐานข้อมูลทดสอบ คืนผลเป็นข้อความ */
 export const sql = (q) => execFileSync("psql", [DB_URL, "-Atc", q], { stdio: ["ignore", "pipe", "pipe"] }).toString().trim();
 
+// รันการทดสอบซ้ำได้: ล้างตัวนับการกรอกรหัสผิด/สมัครถี่ของรอบก่อน (ไม่งั้นถูกบล็อกเพราะทดสอบเอง)
+try {
+  sql("delete from public.auth_rate_limits");
+} catch {
+  // ฐานข้อมูลเวอร์ชันเก่าที่ยังไม่มีตารางนี้
+}
+
 export const log = (...a) => console.log("•", ...a);
 export const assert = (c, m) => {
   if (!c) throw new Error("ASSERT FAILED: " + m);

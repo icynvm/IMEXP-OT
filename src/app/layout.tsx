@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 
 const thaiFont = Noto_Sans_Thai({
@@ -23,7 +24,10 @@ export const viewport: Viewport = {
   themeColor: "#2563eb",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // อ่าน header = ทุกหน้า render ใหม่ทุก request -> Next.js ใส่ nonce ของ CSP ให้ <script> ได้ทุกหน้า
+  // (หน้าที่ build ไว้ล่วงหน้าจะไม่มี nonce และถูก CSP บล็อก)
+  await headers();
   return (
     <html lang="th" className={`${thaiFont.variable} h-full`}>
       <body className="min-h-full bg-gray-50 font-sans text-gray-900 antialiased">{children}</body>
